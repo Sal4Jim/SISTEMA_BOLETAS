@@ -4,7 +4,8 @@ const { testConnection } = require('./config/database');
 const app = express();
 
 // Middlewares
-app.use(express.json()); 
+app.use(express.json());
+app.use(express.static('public')); 
 
 
 // Ruta de prueba para la base de datos
@@ -18,8 +19,12 @@ app.get('/api/test', (req, res) => {
     res.json({ message: 'Servidor funcionando correctamente' });
 });
 
+
 // Aquí irán las rutas de la aplicación
-// app.use('/api/productos', require('./routes/product.routes'));
+app.use('/api/productos', require('./routes/product.routes'));
+app.use('/api/boletas', require('./routes/boleta.routes'));
+
+
 
 const PORT = process.env.PORT || 3000;
 

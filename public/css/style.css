@@ -1,0 +1,102 @@
+/* Estilos Generales */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
+    background-color: #f4f7f6;
+    color: #333;
+}
+
+main {
+    padding: 20px;
+}
+
+h2, h4 {
+    color: #2c3e50;
+}
+
+/* Contenedor principal de la venta */
+.venta-container {
+    display: flex;
+    gap: 30px;
+}
+
+.productos-disponibles {
+    flex: 3; /* Ocupa 3 partes del espacio */
+}
+
+.carrito-container {
+    flex: 2; /* Ocupa 2 partes del espacio */
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    align-self: flex-start; /* Para que no se estire */
+}
+
+/* Grid para los productos */
+.productos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.producto-card {
+    background-color: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
+}
+
+.producto-info {
+    flex-grow: 1;
+}
+
+.producto-info h5 {
+    margin: 0 0 10px 0;
+}
+
+.producto-info p {
+    margin: 0 0 15px 0;
+    color: #555;
+}
+
+.producto-accion {
+    margin-top: auto; /* Empuja el botón hacia abajo */
+}
+
+/* Estilos del carrito */
+#carrito-items {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 20px;
+}
+
+#carrito-items li {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+}
+
+/* Botones */
+button {
+    cursor: pointer;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    font-weight: bold;
+    width: 100%;
+}
+
+#btn-generar-boleta {
+    background-color: #28a745;
+    color: white;
+}
+
+.btn-agregar {
+    background-color: #007bff;
+    color: white;
+}
