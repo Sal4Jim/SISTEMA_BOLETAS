@@ -1,5 +1,7 @@
 const escpos = require('escpos');
 const Network = require('escpos-network');
+const path = require('path');
+const fs = require('fs');
 
 // Función para imprimir el ticket
 const imprimirTicket = (venta) => {
@@ -27,9 +29,9 @@ const imprimirTicket = (venta) => {
             console.log(`RUC: ${empresa.ruc}`);
             console.log('BOLETA DE VENTA ELECTRONICA');
             console.log(`${serie}-${numero}`);
-            console.log('----------------------------------------');
+            console.log('------------------------------------------------');
             console.log(`TOTAL: S/ ${total.toFixed(2)}`);
-            console.log('----------------------------------------\n');
+            console.log('------------------------------------------------\n');
 
 
             // --- IMPRESIÓN REAL (RED / WIFI) ---
@@ -39,6 +41,68 @@ const imprimirTicket = (venta) => {
             const device = new Network(PRINTER_IP, PRINTER_PORT);
             const options = { encoding: "cp850" };
             const printer = new escpos.Printer(device, options);
+
+            // Función auxiliar para imprimir el contenido de texto (para reutilizarla)
+            const imprimirContenido = () => {
+                // Encabezado
+                printer
+                    .encode('cp850')  // Asegura la codificación para tildes y ñ 
+                    .align('ct')
+                    .text(empresa.razonSocial)
+                    .text(empresa.direccion)
+                    .text(`RUC: ${empresa.ruc}`)
+                    .text('------------------------------------------------')
+                    .text('BOLETA DE VENTA ELECTRONICA')
+                    .text(`${serie}-${numero}`)
+                    .text('------------------------------------------------');
+
+                // Información de la venta
+                printer
+                    .align('lt')
+                    .text(`Fecha Emision: ${new Date(venta.fecha).toLocaleString('es-PE')}`)
+                    .text(`Cliente: CLIENTE VARIOS`) // Placeholder hasta tener clientes
+                    .text(`DNI/RUC: 00000000`)       // Placeholder
+                    .text(`Moneda: SOLES`)
+                    .text('------------------------------------------------')
+                    .text('CAN  PRODUCTO                 P.UNIT     TOTAL')
+                    .text('------------------------------------------------');
+
+                // Detalles de productos
+                if (venta.productos && venta.productos.length > 0) {
+                    venta.productos.forEach(prod => {
+                        const nombreProducto = prod.nombre || `Producto #${prod.id}`;
+                        const precio = Number(prod.precio).toFixed(2);
+                        const subtotal = Number(prod.subtotal).toFixed(2);
+                        const cantidad = String(prod.cantidad);
+
+                        // Ancho 80mm (~48 caracteres)
+                        // CAN(4) PROD(22) PREC(9) TOT(10) + 3 espacios = 48
+                        const colCant = cantidad.padEnd(4).substring(0, 4);
+                        const colProd = nombreProducto.padEnd(22).substring(0, 22);
+                        const colPrec = precio.padStart(9).substring(0, 9);
+                        const colTotal = subtotal.padStart(10).substring(0, 10);
+
+                        printer.text(`${colCant} ${colProd} ${colPrec} ${colTotal}`);
+                    });
+                }
+
+                // Totales
+                printer
+                    .align('lt')
+                    .text('------------------------------------------------')
+                    .align('rt')
+                    .text(`Op. Gravada: S/ ${baseImponible.toFixed(2)}`)
+                    .text(`I.G.V. (18%): S/ ${igv.toFixed(2)}`)
+                    .text('------------------------------------------------')
+                    .text(`IMPORTE TOTAL: S/ ${total.toFixed(2)}`)
+                    .text('------------------------------------------------')
+                    .align('ct')
+                    .text('Representacion Impresa de la')
+                    .text('Boleta de Venta Electronica')
+                    .text('.')
+                    .cut()
+                    .close();
+            };
 
             device.open(function (error) {
                 if (error) {
@@ -54,60 +118,22 @@ const imprimirTicket = (venta) => {
                 // 0x1D 0x21 0x00: GS ! 0 -> Tamaño Normal (redundancia de seguridad)
                 device.write(Buffer.from([0x1B, 0x40, 0x1C, 0x2E, 0x1B, 0x74, 0x02, 0x1B, 0x21, 0x00, 0x1D, 0x21, 0x00]));
 
-                // Encabezado
-                printer
-                    .encode('cp850')  // Asegura la codificación para tildes y ñ 
-                    .align('ct')
-                    .text(empresa.razonSocial)
-                    .text(empresa.direccion)
-                    .text(`RUC: ${empresa.ruc}`)
-                    .text('--------------------------------')
-                    .text('BOLETA DE VENTA ELECTRONICA')
-                    .text(`${serie}-${numero}`)
-                    .text('--------------------------------');
-
-                // Información de la venta
-                printer
-                    .align('lt')
-                    .text(`Fecha Emision: ${new Date(venta.fecha).toLocaleString('es-PE')}`)
-                    .text(`Cliente: CLIENTE VARIOS`) // Placeholder hasta tener clientes
-                    .text(`DNI/RUC: 00000000`)       // Placeholder
-                    .text(`Moneda: SOLES`)
-                    .text('--------------------------------')
-                    .text('CANT   DESCRIPCION       P.UNIT   TOTAL');
-
-                // Detalles de productos
-                if (venta.productos && venta.productos.length > 0) {
-                    venta.productos.forEach(prod => {
-                        const nombreProducto = prod.nombre || `Producto #${prod.id}`;
-                        const precio = Number(prod.precio).toFixed(2);
-                        const subtotal = Number(prod.subtotal).toFixed(2);
-
-                        // Imprimimos nombre primero (alineado a la izquierda)
-                        printer.align('lt').text(nombreProducto);
-                        // Luego cantidad, precio y total (alineado a la derecha)
-                        printer.align('rt').text(`${prod.cantidad} x ${precio}      ${subtotal}`);
+                // Intentar cargar e imprimir logo
+                const logoPath = path.join(__dirname, '../public/images/logo2.png');
+                
+                if (fs.existsSync(logoPath)) {
+                    escpos.Image.load(logoPath, function(image) {
+                        printer.align('ct')
+                               .image(image, 's8') // Imprimir imagen
+                               .then(() => {
+                                   imprimirContenido();
+                                   resolve(true);
+                               });
                     });
+                } else {
+                    imprimirContenido();
+                    resolve(true);
                 }
-
-                // Totales
-                printer
-                    .align('lt')
-                    .text('--------------------------------')
-                    .align('rt')
-                    .text(`Op. Gravada: S/ ${baseImponible.toFixed(2)}`)
-                    .text(`I.G.V. (18%): S/ ${igv.toFixed(2)}`)
-                    .text('--------------------------------')
-                    .text(`IMPORTE TOTAL: S/ ${total.toFixed(2)}`)
-                    .text('--------------------------------')
-                    .align('ct')
-                    .text('Representacion Impresa de la')
-                    .text('Boleta de Venta Electronica')
-                    .text('.')
-                    .cut()
-                    .close();
-
-                resolve(true);
             });
         } catch (err) {
             console.error("Error en la función imprimirTicket:", err);
