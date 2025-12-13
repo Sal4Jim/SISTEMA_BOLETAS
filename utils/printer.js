@@ -8,7 +8,7 @@ const imprimirTicket = (venta) => {
             // Datos de la empresa (Simulación para SUNAT)
             const empresa = {
                 ruc: '20999999991',
-                razonSocial: 'PK2 - RESTAURANT Y CEBICHERIA',
+                razonSocial: 'PK2 - RESTAURANT',
                 direccion: 'Av. Independencia 685, Moche 13600'
             };
 
@@ -46,16 +46,18 @@ const imprimirTicket = (venta) => {
                     return reject(error);
                 }
 
-                // --- CORRECCIÓN DE MODO CHINO ---
-                device.write(Buffer.from([0x1C, 0x2E, 0x1B, 0x74, 0x02]));
+                // --- CORRECCIÓN DE MODO CHINO Y RESET TOTAL ---
+                // 0x1B 0x40: Inicializar impresora (ESC @) -> Borra negritas, tamaños gigantes y configuraciones previas
+                // 0x1C 0x2E: Cancelar modo Kanji/Chino (FS .)
+                // 0x1B 0x74 0x02: Forzar tabla de caracteres PC850 (ESC t 2)
+                // 0x1B 0x21 0x00: Modo de impresión: Fuente A (Normal), Sin negrita (ESC ! 0)
+                // 0x1D 0x21 0x00: GS ! 0 -> Tamaño Normal (redundancia de seguridad)
+                device.write(Buffer.from([0x1B, 0x40, 0x1C, 0x2E, 0x1B, 0x74, 0x02, 0x1B, 0x21, 0x00, 0x1D, 0x21, 0x00]));
 
                 // Encabezado
                 printer
                     .encode('cp850')  // Asegura la codificación para tildes y ñ 
                     .align('ct')
-                    .style('normal')   // Resetear estilos (quita negrita)
-                    .font('b')         // Fuente B (más pequeña)
-                    .size(1, 1)        // Tamaño normal
                     .text(empresa.razonSocial)
                     .text(empresa.direccion)
                     .text(`RUC: ${empresa.ruc}`)
