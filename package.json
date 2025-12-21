@@ -1,0 +1,27 @@
+{
+  "name": "sistema_boletas",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Sal4Jim/SISTEMA_BOLETAS.git"
+  },
+  "author": "Jimmy",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Sal4Jim/SISTEMA_BOLETAS/issues"
+  },
+  "homepage": "https://github.com/Sal4Jim/SISTEMA_BOLETAS#readme",
+  "description": "",
+  "dependencies": {
+    "escpos": "^3.0.0-alpha.6",
+    "escpos-network": "^3.0.0-alpha.5",
+    "express": "^5.2.1",
+    "mysql2": "^3.15.3",
+    "nodemon": "^3.1.11"
+  }
+}
