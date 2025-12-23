@@ -15,13 +15,13 @@ const imprimirTicket = (venta) => {
             };
 
             // Cálculos de impuestos (Asumiendo precios incluyen IGV)
-            const total = Number(venta.total) || 0;
+            const total = Number(venta.total_venta) || 0;
             const baseImponible = total / 1.18;
             const igv = total - baseImponible;
 
             // Formato de serie y número (Simulado usando el ID de la BD)
-            const serie = 'B001';
-            const numero = String(venta.id || 0).padStart(8, '0');
+            const serie = venta.serie || 'B001';
+            const numero = String(venta.correlativo || 0).padStart(8, '0');
 
             // --- PREVISUALIZACIÓN EN CONSOLA (LEGIBLE) ---
             console.log('\n\n--- [SIMULACIÓN BOLETA SUNAT] ---');
@@ -59,7 +59,7 @@ const imprimirTicket = (venta) => {
                 // Información de la venta
                 printer
                     .align('lt')
-                    .text(`Fecha Emision: ${new Date(venta.fecha).toLocaleString('es-PE')}`)
+                    .text(`Fecha Emision: ${new Date(venta.fecha_emision).toLocaleString('es-PE')}`)
                     .text(`Cliente: CLIENTE VARIOS`) // Placeholder hasta tener clientes
                     .text(`DNI/RUC: 00000000`)       // Placeholder
                     .text(`Moneda: SOLES`)
@@ -70,8 +70,8 @@ const imprimirTicket = (venta) => {
                 // Detalles de productos
                 if (venta.productos && venta.productos.length > 0) {
                     venta.productos.forEach(prod => {
-                        const nombreProducto = prod.nombre || `Producto #${prod.id}`;
-                        const precio = Number(prod.precio).toFixed(2);
+                        const nombreProducto = prod.nombre || `Producto #${prod.id_producto}`;
+                        const precio = Number(prod.precio_unitario).toFixed(2);
                         const subtotal = Number(prod.subtotal).toFixed(2);
                         const cantidad = String(prod.cantidad);
 

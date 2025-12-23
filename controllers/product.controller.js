@@ -23,6 +23,12 @@ const getProductById = async (req, res) => {
 
 const createProduct = async (req, res) => {
     try {
+        const { nombre, precio, id_categoria } = req.body;
+
+        // Validación según la base de datos (campos NOT NULL)
+        if (!nombre || precio === undefined || !id_categoria) {
+            return res.status(400).json({ message: 'Faltan datos obligatorios: nombre, precio y id_categoria' });
+        }
         const newProduct = await Product.create(req.body);
         res.status(201).json(newProduct);
     } catch (error) {

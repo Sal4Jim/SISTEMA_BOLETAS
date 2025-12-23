@@ -4,7 +4,7 @@ const dbConfig = {
     host: 'localhost',
     user: 'root', 
     password: '',
-    database: 'boletas_bd',
+    database: 'boletera_bd',
     charset: 'utf8mb4',
     waitForConnections: true,
     connectionLimit: 10,

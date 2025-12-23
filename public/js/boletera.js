@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <h5>${producto.nombre}</h5>
                     <p>S/ ${Number(producto.precio).toFixed(2)}</p>
                     <div class="producto-accion">
-                        <button class="btn-agregar" data-id="${producto.producto_id}">Agregar</button>
+                        <button class="btn-agregar" data-id="${producto.id_producto}">Agregar</button>
                     </div>
                 </div>
             `;
@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch(`/api/productos/${productoId}`);
             const producto = await response.json();
 
-            const itemExistente = carrito.find(item => item.producto_id === producto.producto_id);
+            const itemExistente = carrito.find(item => item.id_producto === producto.id_producto);
 
             if (itemExistente) {
                 itemExistente.cantidad++;
@@ -92,7 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const totalVenta = carrito.reduce((sum, item) => sum + item.subtotal, 0);
 
         const ventaData = {
-            total: totalVenta,
+            total_venta: totalVenta,
             productos: carrito
         };
 
