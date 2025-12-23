@@ -1,15 +1,43 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interfaz Boletera - PK2</title>
-    <link rel="stylesheet" href="">
+    <title>Inicio - Sistema PK2</title>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <!-- header -->
     <div id="headerDinamico"></div>
-    Lo que sigue
+    
+    <main class="dashboard-container">
+        <div class="welcome-section">
+            <h1 id="greeting">Bienvenido</h1>
+            <p>Sistema de Boleteo y gestion de Productos</p>
+        </div>
+
+        <div class="cards-grid">
+            <a href="boletera.html" class="card">
+                <div class="card-icon">🛒</div>
+                <h3>Punto de Venta</h3>
+                <p>Registrar ventas y emitir boletas</p>
+            </a>
+
+            <a href="productos.html" class="card">
+                <div class="card-icon">📦</div>
+                <h3>Productos</h3>
+                <p>Gestionar inventario y precios</p>
+            </a>
+
+            <a href="#" class="card" onclick="alert('Próximamente: CRUD Clientes')">
+                <div class="card-icon">👥</div>
+                <h3>Clientes</h3>
+                <p>Base de datos de clientes</p>
+            </a>
+        </div>
+    </main>
+
+    <div id="footerDinamico"></div>
 
 <script src="js/index.js"></script>
 </body>
