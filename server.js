@@ -19,10 +19,10 @@ app.get('/api/test', (req, res) => {
     res.json({ message: 'Servidor funcionando correctamente' });
 });
 
-
 // Aquí irán las rutas de la aplicación
 app.use('/api/productos', require('./routes/product.routes'));
 app.use('/api/boletas', require('./routes/boleta.routes'));
+app.use('/api/tickets', require('./routes/ticket.routes')); 
 
 
 

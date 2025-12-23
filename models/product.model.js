@@ -7,24 +7,24 @@ const Product = {
     },
 
     findById: async (id) => {
-        const [rows] = await pool.query('SELECT * FROM producto WHERE producto_id = ?', [id]);
+        const [rows] = await pool.query('SELECT * FROM producto WHERE id_producto = ?', [id]);
         return rows[0];
     },
 
     create: async (productData) => {
-        const { nombre, cantidad, precio, categoria_id } = productData;
+        const { nombre, precio, id_categoria } = productData;
         const [result] = await pool.query(
-            'INSERT INTO producto (nombre, cantidad, precio, categoria_id) VALUES (?, ?, ?, ?)',
-            [nombre, cantidad, precio, categoria_id]
+            'INSERT INTO producto (nombre, precio, id_categoria) VALUES (?, ?, ?)',
+            [nombre, precio, id_categoria]
         );
         return { id: result.insertId, ...productData };
     },
 
     update: async (id, productData) => {
-        const { nombre, cantidad, precio, categoria_id } = productData;
+        const { nombre, precio, id_categoria } = productData;
         const [result] = await pool.query(
-            'UPDATE producto SET nombre = ?, cantidad = ?, precio = ?, categoria_id = ? WHERE producto_id = ?',
-            [nombre, cantidad, precio, categoria_id, id]
+            'UPDATE producto SET nombre = ?, precio = ?, id_categoria = ? WHERE id_producto = ?',
+            [nombre, precio, id_categoria, id]
         );
         return result.affectedRows;
     }

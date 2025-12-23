@@ -11,8 +11,13 @@ const createBoletaAndPrint = async (req, res) => {
 
         // 2. Si se guarda correctamente, intentar imprimir
         try {
-            // Añadimos la fecha actual para la impresión
-            const ticketData = { ...nuevaBoleta, fecha: new Date() };
+            // Combinamos los datos:
+            // - ventaData: tiene la lista de 'productos' que envió el frontend
+            // - nuevaBoleta: tiene el 'correlativo', 'id_boleta' y 'fecha_emision' generados por la BD
+            const ticketData = { 
+                ...ventaData, 
+                ...nuevaBoleta 
+            };
             await imprimirTicket(ticketData);
             
             // Si todo fue bien (guardado e impreso)
