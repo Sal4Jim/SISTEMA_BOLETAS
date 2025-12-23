@@ -9,9 +9,9 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.mypk2.app.R;
 import com.mypk2.app.model.Producto;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class ProductoOrdenAdapter extends RecyclerView.Adapter<ProductoOrdenAdapter.ViewHolder> {
     private final List<Producto> productos;
@@ -35,9 +35,7 @@ public class ProductoOrdenAdapter extends RecyclerView.Adapter<ProductoOrdenAdap
     public List<Producto> getProductosSeleccionados() {
         List<Producto> seleccionados = new ArrayList<>();
         for (Producto p : productos) {
-            if (p.getCantidad() > 0) {
-                seleccionados.add(p);
-            }
+            if (p.getCantidad() > 0) seleccionados.add(p);
         }
         return seleccionados;
     }
@@ -77,12 +75,8 @@ public class ProductoOrdenAdapter extends RecyclerView.Adapter<ProductoOrdenAdap
     }
 
     class ViewHolder extends RecyclerView.ViewHolder {
-        private final TextView textViewNombre;
-        private final TextView textViewPrecio;
-        private final TextView textViewCantidad;
-        private final TextView textViewEstado;
-        private final Button buttonMenos;
-        private final Button buttonMas;
+        private final TextView textViewNombre, textViewPrecio, textViewCantidad, textViewEstado;
+        private final Button buttonMenos, buttonMas;
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -96,24 +90,21 @@ public class ProductoOrdenAdapter extends RecyclerView.Adapter<ProductoOrdenAdap
 
         void bind(Producto producto) {
             textViewNombre.setText(producto.getNombre());
-            textViewPrecio.setText(new DecimalFormat("S/. #,##0.00").format(producto.getPrecio()));
+            // Usar String.format en lugar de DecimalFormat
+            textViewPrecio.setText(String.format(Locale.getDefault(), "S/. %,.2f", producto.getPrecio()));
             textViewCantidad.setText(String.valueOf(producto.getCantidad()));
 
-            // Configurar estado activo/inactivo
+            // Estado activo/inactivo
             if (!producto.isActivo()) {
                 textViewEstado.setVisibility(View.VISIBLE);
                 buttonMenos.setEnabled(false);
                 buttonMas.setEnabled(false);
                 itemView.setAlpha(0.6f);
-                textViewNombre.setTextColor(itemView.getContext().getColor(R.color.text_disabled));
-                textViewPrecio.setTextColor(itemView.getContext().getColor(R.color.text_disabled));
             } else {
                 textViewEstado.setVisibility(View.GONE);
                 buttonMenos.setEnabled(producto.getCantidad() > 0);
                 buttonMas.setEnabled(true);
                 itemView.setAlpha(1f);
-                textViewNombre.setTextColor(itemView.getContext().getColor(R.color.text_primary));
-                textViewPrecio.setTextColor(itemView.getContext().getColor(R.color.primary));
             }
 
             buttonMenos.setOnClickListener(v -> {
@@ -121,7 +112,7 @@ public class ProductoOrdenAdapter extends RecyclerView.Adapter<ProductoOrdenAdap
                     producto.setCantidad(producto.getCantidad() - 1);
                     textViewCantidad.setText(String.valueOf(producto.getCantidad()));
                     buttonMenos.setEnabled(producto.getCantidad() > 0);
-                    listener.onCantidadChanged(producto);
+                    if (listener != null) listener.onCantidadChanged(producto);
                 }
             });
 
@@ -130,7 +121,7 @@ public class ProductoOrdenAdapter extends RecyclerView.Adapter<ProductoOrdenAdap
                     producto.setCantidad(producto.getCantidad() + 1);
                     textViewCantidad.setText(String.valueOf(producto.getCantidad()));
                     buttonMenos.setEnabled(true);
-                    listener.onCantidadChanged(producto);
+                    if (listener != null) listener.onCantidadChanged(producto);
                 }
             });
         }

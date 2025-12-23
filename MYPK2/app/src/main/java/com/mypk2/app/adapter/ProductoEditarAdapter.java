@@ -10,27 +10,30 @@ import com.google.android.material.materialswitch.MaterialSwitch;
 import com.mypk2.app.R;
 import com.mypk2.app.model.Producto;
 import com.mypk2.app.repository.ProductoRepository;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class ProductoEditarAdapter extends RecyclerView.Adapter<ProductoEditarAdapter.ViewHolder> {
     private final List<Producto> productos;
-    private final OnEstadoChangeListener listener;
+    private OnEstadoChangeListener estadoChangeListener;
 
     public interface OnEstadoChangeListener {
-        void onEstadoChanged(Producto producto, boolean isActivo);
+        void onEstadoChanged();
     }
 
-    public ProductoEditarAdapter(OnEstadoChangeListener listener) {
+    public ProductoEditarAdapter() {
         this.productos = new ArrayList<>();
-        this.listener = listener;
     }
 
     public void setProductos(List<Producto> productos) {
         this.productos.clear();
         this.productos.addAll(productos);
         notifyDataSetChanged();
+    }
+
+    public void setOnEstadoChangeListener(OnEstadoChangeListener listener) {
+        this.estadoChangeListener = listener;
     }
 
     @NonNull
@@ -55,48 +58,48 @@ public class ProductoEditarAdapter extends RecyclerView.Adapter<ProductoEditarAd
     class ViewHolder extends RecyclerView.ViewHolder {
         private final TextView textViewNombre;
         private final TextView textViewPrecio;
+        private final TextView textViewEstado;
         private final MaterialSwitch switchActivo;
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
             textViewNombre = itemView.findViewById(R.id.textViewNombre);
             textViewPrecio = itemView.findViewById(R.id.textViewPrecio);
+            textViewEstado = itemView.findViewById(R.id.textViewEstado);
             switchActivo = itemView.findViewById(R.id.switchActivo);
         }
 
         void bind(Producto producto) {
             textViewNombre.setText(producto.getNombre());
-            textViewPrecio.setText(new DecimalFormat("S/. #,##0.00").format(producto.getPrecio()));
-
-            // Color según estado
-            if (!producto.isActivo()) {
-                textViewNombre.setTextColor(itemView.getContext().getColor(R.color.text_disabled));
-                textViewPrecio.setTextColor(itemView.getContext().getColor(R.color.text_disabled));
-            } else {
-                textViewNombre.setTextColor(itemView.getContext().getColor(R.color.text_primary));
-                textViewPrecio.setTextColor(itemView.getContext().getColor(R.color.text_secondary));
-            }
-
-            // Configurar switch
+            // Usar String.format en lugar de DecimalFormat
+            textViewPrecio.setText(String.format(Locale.getDefault(), "S/. %,.2f", producto.getPrecio()));
             switchActivo.setChecked(producto.isActivo());
-            switchActivo.setOnCheckedChangeListener(null); // Clear previous listeners
+
+            // Mostrar estado visual
+            if (producto.isActivo()) {
+                textViewEstado.setText("ACTIVO");
+                textViewEstado.setBackgroundResource(R.drawable.bg_estado_activo);
+            } else {
+                textViewEstado.setText("INACTIVO");
+                textViewEstado.setBackgroundResource(R.drawable.bg_estado_inactivo);
+            }
 
             switchActivo.setOnCheckedChangeListener((buttonView, isChecked) -> {
                 producto.setActivo(isChecked);
                 ProductoRepository.getInstance().actualizarActivo(producto.getNombre(), isChecked);
 
-                // Update UI colors
-                if (!isChecked) {
-                    textViewNombre.setTextColor(itemView.getContext().getColor(R.color.text_disabled));
-                    textViewPrecio.setTextColor(itemView.getContext().getColor(R.color.text_disabled));
-                } else {
-                    textViewNombre.setTextColor(itemView.getContext().getColor(R.color.text_primary));
-                    textViewPrecio.setTextColor(itemView.getContext().getColor(R.color.text_secondary));
+                // Notificar cambio de estado
+                if (estadoChangeListener != null) {
+                    estadoChangeListener.onEstadoChanged();
                 }
 
-                // Notify listener
-                if (listener != null) {
-                    listener.onEstadoChanged(producto, isChecked);
+                // Actualizar estado visual inmediatamente
+                if (isChecked) {
+                    textViewEstado.setText("ACTIVO");
+                    textViewEstado.setBackgroundResource(R.drawable.bg_estado_activo);
+                } else {
+                    textViewEstado.setText("INACTIVO");
+                    textViewEstado.setBackgroundResource(R.drawable.bg_estado_inactivo);
                 }
             });
         }

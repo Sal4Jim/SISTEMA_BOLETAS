@@ -4,29 +4,28 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/background"
+    android:background="#F8F9FA"
     tools:context=".OrdenActivity">
 
-    <!-- AppBar -->
+    <!-- AppBar con Toolbar -->
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/primary"
+        android:background="#FF6B35"
         android:elevation="4dp">
 
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:background="@color/primary"
-            app:title="Nueva Orden"
-            app:titleTextColor="@color/white"
+            android:background="#FF6B35"
             app:navigationIcon="@drawable/ic_arrow_back"
-            app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
+            app:title="Nueva Orden"
+            app:titleTextColor="@android:color/white" />
 
     </com.google.android.material.appbar.AppBarLayout>
 
-    <!-- Content -->
+    <!-- Contenido principal -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -34,6 +33,7 @@
 
         <!-- Filtros -->
         <com.google.android.material.card.MaterialCardView
+            android:id="@+id/filterCard"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_margin="16dp"
@@ -53,7 +53,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Filtrar por:"
-                    android:textColor="@color/text_secondary"
+                    android:textColor="#666666"
                     android:textSize="14sp"
                     android:layout_marginBottom="8dp" />
 
@@ -66,19 +66,21 @@
 
                     <com.google.android.material.chip.Chip
                         android:id="@+id/chipCarta"
-                        style="@style/ChipStyle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
                         android:text="Toda la carta"
-                        app:chipIcon="@drawable/ic_menu_book" />
+                        app:chipBackgroundColor="@color/primary" />
 
                     <com.google.android.material.chip.Chip
                         android:id="@+id/chipMenu"
-                        style="@style/ChipStyle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
                         android:text="Solo activos"
-                        app:chipIcon="@drawable/ic_check_circle" />
+                        app:chipBackgroundColor="@color/secondary" />
 
                 </com.google.android.material.chip.ChipGroup>
 
-                <!-- Buscador (solo visible en modo Carta) -->
+                <!-- Buscador -->
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/textInputLayout"
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
@@ -90,16 +92,14 @@
                     app:boxCornerRadiusBottomStart="8dp"
                     app:boxCornerRadiusTopEnd="8dp"
                     app:boxCornerRadiusTopStart="8dp"
-                    app:endIconDrawable="@drawable/ic_search"
-                    app:endIconMode="custom">
+                    app:endIconMode="clear_text">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/editTextBuscador"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:hint="Buscar producto..."
-                        android:imeOptions="actionSearch"
-                        android:inputType="text" />
+                        android:imeOptions="actionSearch" />
 
                 </com.google.android.material.textfield.TextInputLayout>
 
@@ -128,10 +128,10 @@
             android:layout_height="wrap_content"
             android:layout_margin="16dp"
             android:text="Ver Resumen"
-            android:textColor="@color/white"
+            android:textColor="@android:color/white"
             app:icon="@drawable/ic_receipt"
-            app:iconTint="@color/white"
-            app:backgroundTint="@color/primary"
+            app:iconTint="@android:color/white"
+            app:backgroundTint="#FF6B35"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
 

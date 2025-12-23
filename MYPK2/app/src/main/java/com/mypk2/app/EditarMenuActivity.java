@@ -1,108 +1,100 @@
 package com.mypk2.app;
 
 import android.os.Bundle;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
-import android.widget.Toast;
-
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.mypk2.app.R;
 import com.mypk2.app.adapter.ProductoEditarAdapter;
 import com.mypk2.app.model.Producto;
 import com.mypk2.app.repository.ProductoRepository;
-
 import java.util.List;
 
 public class EditarMenuActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
     private ProductoEditarAdapter adapter;
-    private TextView textViewActivosCount;
-    private ProductoRepository repository;
+    private View emptyState;
+    private TextView textViewTotalProductos, textViewActivos, textViewInactivos;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_editar_menu);
 
+        // Configurar toolbar
+        androidx.appcompat.widget.Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setTitle("Editar Menú");
+
+        // Inicializar vistas
         initViews();
-        initToolbar();
-        initRecyclerView();
-        loadProductos();
+
+        // Cargar productos y estadísticas
+        cargarProductos();
+        actualizarEstadisticas();
     }
 
     private void initViews() {
         recyclerView = findViewById(R.id.recyclerViewProductos);
-        textViewActivosCount = findViewById(R.id.textViewActivosCount);
-        repository = ProductoRepository.getInstance();
-    }
+        emptyState = findViewById(R.id.emptyState);
+        textViewTotalProductos = findViewById(R.id.textViewTotalProductos);
+        textViewActivos = findViewById(R.id.textViewActivos);
+        textViewInactivos = findViewById(R.id.textViewInactivos);
 
-    private void initToolbar() {
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setDisplayShowHomeEnabled(true);
-            getSupportActionBar().setTitle("Editar Menú");
-        }
-
-        toolbar.setNavigationOnClickListener(v -> onBackPressed());
-    }
-
-    private void initRecyclerView() {
-        adapter = new ProductoEditarAdapter(new ProductoEditarAdapter.OnEstadoChangeListener() {
-            @Override
-            public void onEstadoChanged(Producto producto, boolean isActivo) {
-                // Actualizar contador inmediatamente
-                updateActivosCount();
-
-                // Mostrar feedback
-                String estado = isActivo ? "activado" : "desactivado";
-                String mensaje = producto.getNombre() + " " + estado;
-                Toast.makeText(EditarMenuActivity.this, mensaje, Toast.LENGTH_SHORT).show();
-            }
-        });
-
+        // Configurar RecyclerView
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        adapter = new ProductoEditarAdapter();
         recyclerView.setAdapter(adapter);
-        recyclerView.setHasFixedSize(true);
+
+        // Configurar listener para actualizar estadísticas cuando cambie el estado
+        adapter.setOnEstadoChangeListener(() -> actualizarEstadisticas());
     }
 
-    private void loadProductos() {
-        List<Producto> productos = repository.getProductos();
+    private void cargarProductos() {
+        List<Producto> productos = ProductoRepository.getInstance().getProductos();
         adapter.setProductos(productos);
-        updateActivosCount();
+
+        // Mostrar estado vacío si no hay productos
+        if (productos.isEmpty()) {
+            emptyState.setVisibility(View.VISIBLE);
+            recyclerView.setVisibility(View.GONE);
+        } else {
+            emptyState.setVisibility(View.GONE);
+            recyclerView.setVisibility(View.VISIBLE);
+        }
     }
 
-    private void updateActivosCount() {
-        List<Producto> productos = repository.getProductos();
-        int activos = 0;
-        int total = productos.size();
+    private void actualizarEstadisticas() {
+        ProductoRepository repository = ProductoRepository.getInstance();
 
-        for (Producto p : productos) {
-            if (p.isActivo()) activos++;
-        }
+        int total = repository.getTotalProductos();
+        int activos = repository.getProductosActivosCount();
+        int inactivos = repository.getProductosInactivosCount();
 
-        textViewActivosCount.setText(activos + "/" + total);
-
-        // Cambiar color según cantidad de activos
-        if (activos == 0) {
-            textViewActivosCount.setTextColor(getColor(R.color.error));
-        } else if (activos == total) {
-            textViewActivosCount.setTextColor(getColor(R.color.success));
-        } else {
-            textViewActivosCount.setTextColor(getColor(R.color.warning));
-        }
+        textViewTotalProductos.setText(String.valueOf(total));
+        textViewActivos.setText(String.valueOf(activos));
+        textViewInactivos.setText(String.valueOf(inactivos));
     }
 
     @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            finish();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Actualizar datos cuando se regrese a la actividad
+        cargarProductos();
+        actualizarEstadisticas();
     }
 }

@@ -15,10 +15,10 @@
         <item name="colorOnSecondaryContainer">@color/md_theme_onSecondaryContainer</item>
 
         <!-- Tertiary brand color -->
-        <item name="colorTertiary">@color/md_theme_tertiary</color>
-        <item name="colorOnTertiary">@color/md_theme_onTertiary</color>
-        <item name="colorTertiaryContainer">@color/md_theme_tertiaryContainer</color>
-        <item name="colorOnTertiaryContainer">@color/md_theme_onTertiaryContainer</color>
+        <item name="colorTertiary">@color/md_theme_tertiary</item>
+        <item name="colorOnTertiary">@color/md_theme_onTertiary</item>
+        <item name="colorTertiaryContainer">@color/md_theme_tertiaryContainer</item>
+        <item name="colorOnTertiaryContainer">@color/md_theme_onTertiaryContainer</item>
 
         <!-- Error colors -->
         <item name="colorError">@color/md_theme_error</item>
@@ -71,5 +71,4 @@
         <item name="iconTint">@color/primary</item>
         <item name="android:padding">0dp</item>
     </style>
-
 </resources>
