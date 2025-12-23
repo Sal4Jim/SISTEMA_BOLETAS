@@ -12,7 +12,10 @@
     <main class="dashboard-container">
         <div class="header-actions" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h1 style="color: var(--primary); margin: 0;">Inventario de Productos</h1>
-            <button class="btn-agregar" id="btn-nuevo-producto" style="width: auto; padding: 10px 20px;">+ Nuevo Producto</button>
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="input-busqueda" placeholder="Buscar por nombre..." style="padding: 10px; border: 1px solid var(--border-color); border-radius: 5px;">
+                <button class="btn-agregar" id="btn-nuevo-producto" style="width: auto; padding: 10px 20px;">+ Nuevo Producto</button>
+            </div>
         </div>
 
         <div class="table-responsive">
@@ -22,8 +25,9 @@
                         <th>ID</th>
                         <th>Imagen</th>
                         <th>Nombre</th>
+                        <th>Descripción</th>
                         <th>Precio</th>
-                        <th>Categoría (ID)</th>
+                        <th>Categoría</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -59,8 +63,10 @@
                     <input type="file" id="prod-imagen" accept="image/*">
                 </div>
                 <div class="form-group">
-                    <label for="prod-categoria">ID Categoría:</label>
-                    <input type="number" id="prod-categoria" required placeholder="Ej: 1">
+                    <label for="prod-categoria">Categoría del Producto:</label>
+                    <select id="prod-categoria" required>
+                        <option value="">Seleccione una categoría</option>
+                    </select>
                 </div>
                 <button type="submit" class="btn-agregar">Guardar</button>
             </form>

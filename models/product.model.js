@@ -2,7 +2,11 @@ const { pool } = require('../config/database');
 
 const Product = {
     findAll: async () => {
-        const [rows] = await pool.query('SELECT * FROM producto');
+        const [rows] = await pool.query(`
+            SELECT p.*, c.nombre AS nombre_categoria 
+            FROM producto p 
+            LEFT JOIN categoria c ON p.id_categoria = c.id_categoria
+        `);
         return rows;
     },
 

@@ -406,10 +406,12 @@ footer {
     font-weight: 500;
 }
 
-.form-group input {
+.form-group input, .form-group select {
     width: 100%;
     padding: 10px;
     border: 1px solid var(--border-color);
     border-radius: 5px;
     box-sizing: border-box;
+    font-family: inherit;
+    background-color: #fff;
 }

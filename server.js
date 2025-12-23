@@ -23,6 +23,8 @@ app.get('/api/test', (req, res) => {
 app.use('/api/productos', require('./routes/product.routes'));
 app.use('/api/boletas', require('./routes/boleta.routes'));
 app.use('/api/tickets', require('./routes/ticket.routes')); 
+app.use('/api/categorias', require('./routes/category.routes'));
+
 
 
 

@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const spanClose = document.querySelector('.close-modal');
     const formProducto = document.getElementById('form-producto');
     const modalTitulo = document.getElementById('modal-titulo');
+    const inputBusqueda = document.getElementById('input-busqueda');
 
     // Inputs del formulario
     const inputId = document.getElementById('prod-id');
@@ -14,14 +15,30 @@ document.addEventListener('DOMContentLoaded', () => {
     const inputImagen = document.getElementById('prod-imagen');
     const inputCategoria = document.getElementById('prod-categoria');
 
-    // 1. Cargar Productos
-    const cargarProductos = async () => {
+    let productosLista = [];
+
+    // 0. Cargar Categorías para el Select
+    const cargarCategorias = async () => {
         try {
-            const res = await fetch('/api/productos');
-            const productos = await res.json();
+            const res = await fetch('/api/categorias');
+            const categorias = await res.json();
             
-            tablaBody.innerHTML = '';
-            productos.forEach(prod => {
+            inputCategoria.innerHTML = '<option value="">Seleccione una categoría</option>';
+            categorias.forEach(cat => {
+                const option = document.createElement('option');
+                option.value = cat.id_categoria;
+                option.textContent = cat.nombre;
+                inputCategoria.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Error cargando categorías:', error);
+        }
+    };
+
+    // Función auxiliar para renderizar la tabla
+    const renderizarTabla = (lista) => {
+        tablaBody.innerHTML = '';
+        lista.forEach(prod => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>${prod.id_producto}</td>
@@ -29,8 +46,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         ${prod.imagen ? `<img src="${prod.imagen}" alt="Img" style="height: 50px; width: 50px; object-fit: cover; border-radius: 5px;">` : '<span style="color: #ccc;">Sin imagen</span>'}
                     </td>
                     <td>${prod.nombre}</td>
+                    <td>${prod.descripcion || ''}</td>
                     <td>S/ ${Number(prod.precio).toFixed(2)}</td>
-                    <td>${prod.id_categoria}</td>
+                    <td>${prod.nombre_categoria || 'Sin categoría'}</td>
                     <td>
                         <button class="btn-editar" data-id="${prod.id_producto}">Editar</button>
                         <button class="btn-eliminar" data-id="${prod.id_producto}">Eliminar</button>
@@ -38,6 +56,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
                 tablaBody.appendChild(tr);
             });
+    };
+
+    // 1. Cargar Productos
+    const cargarProductos = async () => {
+        try {
+            const res = await fetch('/api/productos');
+            productosLista = await res.json();
+            renderizarTabla(productosLista);
         } catch (error) {
             console.error('Error cargando productos:', error);
         }
@@ -125,5 +151,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Inicializar
+    cargarCategorias();
     cargarProductos();
+
+    // Buscador en tiempo real
+    inputBusqueda.addEventListener('input', (e) => {
+        const termino = e.target.value.toLowerCase();
+        const filtrados = productosLista.filter(prod => 
+            prod.nombre.toLowerCase().includes(termino)
+        );
+        renderizarTabla(filtrados);
+    });
 });
