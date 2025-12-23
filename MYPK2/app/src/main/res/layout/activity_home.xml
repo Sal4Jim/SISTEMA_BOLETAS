@@ -168,7 +168,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="16dp"
-        android:text="© 2024 Restaurante App"
+        android:text="© 2026 Restaurante App"
         android:textColor="@color/text_secondary"
         android:textSize="12sp"
         android:gravity="center" />
