@@ -142,4 +142,78 @@ const imprimirTicket = (venta) => {
     });
 };
 
-module.exports = { imprimirTicket };
+// Función para imprimir el TICKET DE PEDIDO (COCINA/BARRA)
+const imprimirTicketPedido = (pedido) => {
+    return new Promise((resolve, reject) => {
+        try {
+            const PRINTER_IP = '192.168.100.64'; 
+            const PRINTER_PORT = 9100; 
+
+            const device = new Network(PRINTER_IP, PRINTER_PORT);
+            const options = { encoding: "cp850" };
+            const printer = new escpos.Printer(device, options);
+
+            device.open(function (error) {
+                if (error) {
+                    console.error("Error al abrir impresora para pedido:", error);
+                    return reject(error);
+                }
+
+                // Resetear impresora
+                device.write(Buffer.from([0x1B, 0x40, 0x1C, 0x2E, 0x1B, 0x74, 0x02]));
+
+                printer
+                    .align('ct')
+                    .size(1, 1) // Doble altura
+                    .text('*** NUEVO PEDIDO ***')
+                    .size(0, 0) // Normal
+                    .text('--------------------------------')
+                    .align('lt')
+                    .size(1, 1) // Doble altura para la mesa
+                    .text(`MESA: ${pedido.mesa}`)
+                    .size(0, 0)
+                    .text(`Fecha: ${new Date().toLocaleString('es-PE')}`)
+                    .text(`Ticket ID: #${pedido.id_ticket}`)
+                    .text('--------------------------------')
+                    .size(1, 0) // Doble ancho para encabezados
+                    .text('CANT  DESCRIPCION')
+                    .size(0, 0)
+                    .text('--------------------------------');
+
+                // Listar productos
+                if (pedido.productos && pedido.productos.length > 0) {
+                    pedido.productos.forEach(prod => {
+                        const cantidad = String(prod.cantidad);
+                        // Intentamos usar el nombre que viene del JSON, si no, un genérico
+                        const nombre = prod.nombre || `Prod ID:${prod.id_producto}`;
+
+                        // Formato: Cantidad a la izquierda, Nombre a la derecha
+                        // Usamos size(1,1) para que el cocinero vea bien
+                        printer
+                            .size(1, 1) 
+                            .text(`${cantidad} x ${nombre}`);
+                    });
+                }
+
+                printer.size(0, 0).text('--------------------------------');
+
+                // Notas
+                if (pedido.notas) {
+                    printer
+                        .align('ct')
+                        .text('--- NOTAS ---')
+                        .size(1, 0)
+                        .text(pedido.notas)
+                        .size(0, 0);
+                }
+
+                printer.cut().close();
+                resolve(true);
+            });
+        } catch (err) {
+            reject(err);
+        }
+    });
+};
+
+module.exports = { imprimirTicket, imprimirTicketPedido };

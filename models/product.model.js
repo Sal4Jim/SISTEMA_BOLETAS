@@ -12,19 +12,19 @@ const Product = {
     },
 
     create: async (productData) => {
-        const { nombre, stock, precio, id_categoria } = productData;
+        const { nombre, precio, id_categoria } = productData;
         const [result] = await pool.query(
-            'INSERT INTO producto (nombre, stock, precio, id_categoria) VALUES (?, ?, ?, ?)',
-            [nombre, stock || 0, precio, id_categoria]
+            'INSERT INTO producto (nombre, precio, id_categoria) VALUES (?, ?, ?)',
+            [nombre, precio, id_categoria]
         );
         return { id: result.insertId, ...productData };
     },
 
     update: async (id, productData) => {
-        const { nombre, stock, precio, id_categoria } = productData;
+        const { nombre, precio, id_categoria } = productData;
         const [result] = await pool.query(
-            'UPDATE producto SET nombre = ?, stock = ?, precio = ?, id_categoria = ? WHERE id_producto = ?',
-            [nombre, stock, precio, id_categoria, id]
+            'UPDATE producto SET nombre = ?, precio = ?, id_categoria = ? WHERE id_producto = ?',
+            [nombre, precio, id_categoria, id]
         );
         return result.affectedRows;
     }
