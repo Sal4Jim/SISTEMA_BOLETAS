@@ -6,13 +6,12 @@ const Ticket = {
         try {
             await connection.beginTransaction();
 
-            const { mesa, notas, productos } = ticketData;
+            const { mesa, notas, productos, total_estimado } = ticketData;
 
             // 1. Insertar en la tabla `ticket` (Cabecera)
-            // Nota: total_estimado es opcional en un ticket de comanda, lo dejamos en 0 por ahora
             const [ticketResult] = await connection.query(
                 'INSERT INTO ticket (mesa, notas, total_estimado) VALUES (?, ?, ?)',
-                [mesa, notas || '', 0]
+                [mesa, notas || '', total_estimado || 0]
             );
             const idTicket = ticketResult.insertId;
 

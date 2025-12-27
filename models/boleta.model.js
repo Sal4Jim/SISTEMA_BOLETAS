@@ -6,7 +6,7 @@ const Boleta = {
         try {
             await connection.beginTransaction();
 
-            const { total_venta, productos } = boletaData;
+            const { total_venta, productos, id_pago, id_cliente, id_ticket } = boletaData;
 
             // 1. Obtener el siguiente correlativo para la serie B001
             const [serieResult] = await connection.query("SELECT IFNULL(MAX(correlativo), 0) + 1 as siguiente FROM boleta WHERE serie = 'B001'");
@@ -14,8 +14,8 @@ const Boleta = {
 
             // 2. Insertar en la tabla `boleta`
             const [boletaResult] = await connection.query(
-                'INSERT INTO boleta (serie, correlativo, total_venta, id_cliente) VALUES (?, ?, ?, ?)',
-                ['B001', nuevoCorrelativo, total_venta, 1] // id_cliente 1 por defecto (CLIENTE VARIOS)
+                'INSERT INTO boleta (serie, correlativo, total_venta, id_pago, id_cliente, id_ticket) VALUES (?, ?, ?, ?, ?, ?)',
+                ['B001', nuevoCorrelativo, total_venta, id_pago || 1, id_cliente || 1, id_ticket || null]
             );
             const idBoleta = boletaResult.insertId;
 
