@@ -163,22 +163,69 @@ public class MenuActivity extends AppCompatActivity implements ProductoOrdenAdap
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_confirmar_pedido, null);
 
         TextView textViewResumen = dialogView.findViewById(R.id.textViewResumen);
+        // ... existing code ...
         TextView textViewTotal = dialogView.findViewById(R.id.textViewTotal);
         RadioGroup radioGroupTipoPedido = dialogView.findViewById(R.id.radioGroupTipoPedido);
         LinearLayout layoutMesa = dialogView.findViewById(R.id.layoutMesa);
-        LinearLayout layoutDireccion = dialogView.findViewById(R.id.layoutDireccion);
-        EditText editTextMesa = dialogView.findViewById(R.id.editTextMesa);
-        EditText editTextDireccion = dialogView.findViewById(R.id.editTextDireccion);
+        // EditText editTextMesa = dialogView.findViewById(R.id.editTextMesa); //
+        // REMOVIDO
+        android.widget.GridLayout gridMesas = dialogView.findViewById(R.id.gridMesas);
         EditText editTextObservaciones = dialogView.findViewById(R.id.editTextObservaciones);
 
         class ResumenPedido {
             StringBuilder texto = new StringBuilder();
             double total = 0;
+            String mesaSeleccionada = "";
         }
 
         final ResumenPedido resumenPedido = new ResumenPedido();
         final List<Producto> productosFinal = new ArrayList<>(productosSeleccionados);
         final int tapersFinal = cantidadTapers;
+
+        // Configurar Grid de Mesas
+        for (int i = 1; i <= 15; i++) {
+            final int numMesa = i;
+            android.widget.Button btnMesa = new android.widget.Button(this);
+            btnMesa.setText(String.valueOf(numMesa));
+
+            // Layout params para los botones
+            android.widget.GridLayout.LayoutParams params = new android.widget.GridLayout.LayoutParams();
+            params.width = 0;
+            params.height = android.widget.GridLayout.LayoutParams.WRAP_CONTENT;
+            params.columnSpec = android.widget.GridLayout.spec(android.widget.GridLayout.UNDEFINED, 1f);
+            params.setMargins(8, 8, 8, 8);
+            btnMesa.setLayoutParams(params);
+
+            // Estilo por defecto (no seleccionado)
+            btnMesa.setBackgroundTintList(android.content.res.ColorStateList.valueOf(android.graphics.Color.WHITE));
+            btnMesa.setTextColor(android.graphics.Color.BLACK);
+            // Borde rojo suave
+            // Nota: Para bordes redondeados y colores específicos es mejor usar un drawable
+            // xml,
+            // pero aquí lo haremos simple o usaremos MaterialButton si es posible.
+            // Usaremos un estilo simple toggle por ahora.
+
+            btnMesa.setOnClickListener(v -> {
+                // Deseleccionar todos
+                for (int j = 0; j < gridMesas.getChildCount(); j++) {
+                    View child = gridMesas.getChildAt(j);
+                    if (child instanceof android.widget.Button) {
+                        child.setBackgroundTintList(
+                                android.content.res.ColorStateList.valueOf(android.graphics.Color.WHITE));
+                        ((android.widget.Button) child).setTextColor(android.graphics.Color.BLACK);
+                    }
+                }
+                // Seleccionar actual
+                btnMesa.setBackgroundTintList(android.content.res.ColorStateList.valueOf(android.graphics.Color.RED)); // o
+                                                                                                                       // el
+                                                                                                                       // color
+                                                                                                                       // primario
+                btnMesa.setTextColor(android.graphics.Color.WHITE);
+                resumenPedido.mesaSeleccionada = String.valueOf(numMesa);
+            });
+
+            gridMesas.addView(btnMesa);
+        }
 
         for (Producto p : productosSeleccionados) {
             double subtotal = p.getCantidad() * p.getPrecio();
@@ -204,10 +251,9 @@ public class MenuActivity extends AppCompatActivity implements ProductoOrdenAdap
         radioGroupTipoPedido.setOnCheckedChangeListener((group, checkedId) -> {
             if (checkedId == R.id.radioMesa) {
                 layoutMesa.setVisibility(View.VISIBLE);
-                layoutDireccion.setVisibility(View.GONE);
             } else if (checkedId == R.id.radioDelivery) {
                 layoutMesa.setVisibility(View.GONE);
-                layoutDireccion.setVisibility(View.VISIBLE);
+                resumenPedido.mesaSeleccionada = ""; // Limpiar selección si cambia a delivery
             }
         });
 
@@ -217,27 +263,20 @@ public class MenuActivity extends AppCompatActivity implements ProductoOrdenAdap
                 .setPositiveButton("Confirmar", (dialogInterface, which) -> {
                     confirmarPedido(
                             radioGroupTipoPedido.getCheckedRadioButtonId() == R.id.radioMesa ? "Mesa" : "Delivery",
-                            editTextMesa.getText().toString().trim(),
-                            editTextDireccion.getText().toString().trim(),
+                            resumenPedido.mesaSeleccionada,
                             editTextObservaciones.getText().toString().trim(),
                             productosFinal,
                             tapersFinal,
                             resumenPedido.total);
                 })
-                .setNegativeButton("Cancelar", null)
                 .setNeutralButton("Seguir Editando", null)
                 .show();
     }
 
-    private void confirmarPedido(String tipoPedido, String mesa, String direccion, String observaciones,
+    private void confirmarPedido(String tipoPedido, String mesa, String observaciones,
             List<Producto> productos, int tapers, double total) {
         if (tipoPedido.equals("Mesa") && mesa.isEmpty()) {
             Toast.makeText(this, "Por favor ingrese el número de mesa", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        if (tipoPedido.equals("Delivery") && direccion.isEmpty()) {
-            Toast.makeText(this, "Por favor ingrese la dirección de entrega", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -264,15 +303,6 @@ public class MenuActivity extends AppCompatActivity implements ProductoOrdenAdap
                 notasCompletas += "\n";
             }
             notasCompletas += "Tapers: " + tapers + " (S/. " + (tapers * PRECIO_TAPER) + ")";
-        }
-
-        // Si es delivery, agregar dirección a las notas
-        if (tipoPedido.equals("Delivery") && !direccion.isEmpty()) {
-            if (!notasCompletas.isEmpty()) {
-                notasCompletas = "Dirección: " + direccion + "\n" + notasCompletas;
-            } else {
-                notasCompletas = "Dirección: " + direccion;
-            }
         }
 
         double totalConTapers = total + (tapers * PRECIO_TAPER);

@@ -13,7 +13,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="📋 Confirmar Pedido"
+            android:text=""
             android:textSize="20sp"
             android:textStyle="bold"
             android:gravity="center"
@@ -71,65 +71,36 @@
             </RadioGroup>
         </LinearLayout>
 
-        <!-- Campo para número de mesa -->
         <LinearLayout
             android:id="@+id/layoutMesa"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
+            android:orientation="vertical"
             android:layout_marginBottom="16dp"
             android:visibility="visible">
 
             <TextView
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:text="Número de mesa:"
-                android:textSize="16sp" />
+                android:textSize="16sp"
+                android:layout_marginBottom="8dp"/>
 
-            <EditText
-                android:id="@+id/editTextMesa"
-                android:layout_width="0dp"
+            <GridLayout
+                android:id="@+id/gridMesas"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="2"
-                android:hint="Ej: 1, 2, 3..."
-                android:inputType="number" />
+                android:columnCount="5"
+                android:rowCount="3"
+                android:alignmentMode="alignMargins"
+                android:columnOrderPreserved="false"
+                android:useDefaultMargins="true">
+                <!-- Se agregarán botones programáticamente -->
+            </GridLayout>
         </LinearLayout>
 
         <!-- Campo para dirección -->
-        <LinearLayout
-            android:id="@+id/layoutDireccion"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_marginBottom="16dp"
-            android:visibility="gone">
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text=""
-                android:textSize="16sp"
-                android:textColor="#4CAF50"
-                android:textStyle="bold"
-                android:gravity="center"
-                android:layout_marginBottom="8dp" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Dirección de entrega:"
-                android:textSize="14sp" />
-
-            <EditText
-                android:id="@+id/editTextDireccion"
-                android:layout_width="match_parent"
-                android:layout_height="100dp"
-                android:hint="Ej: Calle Las Flores 123"
-                android:inputType="textMultiLine"
-                android:gravity="top"
-                android:maxLines="3" />
-        </LinearLayout>
 
         <!-- Campo para observaciones -->
         <TextView
