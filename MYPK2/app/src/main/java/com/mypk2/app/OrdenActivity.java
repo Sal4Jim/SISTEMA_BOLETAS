@@ -5,6 +5,7 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
@@ -27,10 +28,13 @@ public class OrdenActivity extends AppCompatActivity implements ProductoOrdenAda
     private ProductoOrdenAdapter adapter;
     private ChipGroup chipGroupFiltros;
     private TextInputEditText editTextBuscador;
-    private ExtendedFloatingActionButton fabResumen;
+    private ExtendedFloatingActionButton fabResumen, fabTapers;
 
     private List<Producto> todosProductos;
     private List<Producto> productosFiltrados;
+    private int cantidadTapers = 0;
+    private final double PRECIO_TAPER = 1.0;
+    private ProductoRepository productoRepository;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,6 +48,9 @@ public class OrdenActivity extends AppCompatActivity implements ProductoOrdenAda
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setTitle("Nueva Orden");
         }
+
+        // Inicializar repositorio
+        productoRepository = ProductoRepository.getInstance(this);
 
         // Inicializar vistas
         initViews();
@@ -60,10 +67,11 @@ public class OrdenActivity extends AppCompatActivity implements ProductoOrdenAda
         chipGroupFiltros = findViewById(R.id.chipGroupFiltros);
         editTextBuscador = findViewById(R.id.editTextBuscador);
         fabResumen = findViewById(R.id.fabResumen);
+        fabTapers = findViewById(R.id.fabTapers);
     }
 
     private void cargarProductos() {
-        todosProductos = ProductoRepository.getInstance().getProductos();
+        todosProductos = productoRepository.getProductos();
         productosFiltrados = new ArrayList<>(todosProductos);
 
         adapter = new ProductoOrdenAdapter(this);
@@ -73,17 +81,20 @@ public class OrdenActivity extends AppCompatActivity implements ProductoOrdenAda
     }
 
     private void configurarListeners() {
-        // Filtros
+        // Filtros - CORREGIDO
         chipGroupFiltros.setOnCheckedStateChangeListener((group, checkedIds) -> {
-            if (checkedIds.isEmpty()) return;
-
-            int chipId = checkedIds.get(0);
-            if (chipId == R.id.chipCarta) {
-                // Mostrar todos los productos
+            if (checkedIds.isEmpty()) {
+                // Si no hay selección, mostrar todos
                 productosFiltrados = new ArrayList<>(todosProductos);
-            } else if (chipId == R.id.chipMenu) {
-                // Mostrar solo activos
-                productosFiltrados = ProductoRepository.getInstance().getProductosActivos();
+            } else {
+                int chipId = checkedIds.get(0);
+                if (chipId == R.id.chipCarta) {
+                    // Mostrar todos los productos
+                    productosFiltrados = new ArrayList<>(todosProductos);
+                } else if (chipId == R.id.chipMenu) {
+                    // Mostrar solo productos ACTIVOS
+                    productosFiltrados = filtrarProductosActivos(todosProductos);
+                }
             }
 
             // Aplicar búsqueda si existe
@@ -109,8 +120,21 @@ public class OrdenActivity extends AppCompatActivity implements ProductoOrdenAda
             }
         });
 
+        // Botón tapers
+        fabTapers.setOnClickListener(v -> mostrarDialogoTapers());
+
         // Botón resumen
         fabResumen.setOnClickListener(v -> mostrarResumen());
+    }
+
+    private List<Producto> filtrarProductosActivos(List<Producto> productos) {
+        List<Producto> activos = new ArrayList<>();
+        for (Producto p : productos) {
+            if (p.isActivo()) {
+                activos.add(p);
+            }
+        }
+        return activos;
     }
 
     private void filtrarPorBusqueda(String query) {
@@ -131,27 +155,106 @@ public class OrdenActivity extends AppCompatActivity implements ProductoOrdenAda
         adapter.setProductos(resultados);
     }
 
+    private void mostrarDialogoTapers() {
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_tapers, null);
+
+        TextView textViewCantidad = dialogView.findViewById(R.id.textViewCantidadTapers);
+        TextView textViewTotal = dialogView.findViewById(R.id.textViewTotalTapers);
+        View buttonMenos = dialogView.findViewById(R.id.buttonMenosTaper);
+        View buttonMas = dialogView.findViewById(R.id.buttonMasTaper);
+
+        // Actualizar vista inicial
+        textViewCantidad.setText(String.valueOf(cantidadTapers));
+        actualizarTotalTapers(textViewTotal);
+
+        buttonMenos.setOnClickListener(v -> {
+            if (cantidadTapers > 0) {
+                cantidadTapers--;
+                textViewCantidad.setText(String.valueOf(cantidadTapers));
+                actualizarTotalTapers(textViewTotal);
+                actualizarTextoBotonTapers();
+                actualizarResumenButton();
+            }
+        });
+
+        buttonMas.setOnClickListener(v -> {
+            cantidadTapers++;
+            textViewCantidad.setText(String.valueOf(cantidadTapers));
+            actualizarTotalTapers(textViewTotal);
+            actualizarTextoBotonTapers();
+            actualizarResumenButton();
+        });
+
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Agregar Tapers")
+                .setView(dialogView)
+                .setPositiveButton("Aceptar", (dialog, which) -> {
+                    // Los cambios ya se aplicaron en tiempo real
+                })
+                .setNegativeButton("Cancelar", null)
+                .show();
+    }
+
+    private void actualizarTotalTapers(TextView textView) {
+        double totalTapers = cantidadTapers * PRECIO_TAPER;
+        textView.setText(String.format(Locale.getDefault(), "Total: S/. %,.2f", totalTapers));
+    }
+
+    private void actualizarTextoBotonTapers() {
+        fabTapers.setText("Tapers: " + cantidadTapers);
+    }
+
+    private void actualizarResumenButton() {
+        int totalItems = 0;
+        try {
+            totalItems = adapter.getTotalItems() + cantidadTapers;
+        } catch (Exception e) {
+            totalItems = cantidadTapers;
+        }
+
+        if (totalItems > 0) {
+            fabResumen.setText("Ver Resumen (" + totalItems + ")");
+            fabResumen.setVisibility(View.VISIBLE);
+        } else {
+            fabResumen.setText("Ver Resumen");
+            fabResumen.setVisibility(View.GONE);
+        }
+    }
+
     private void mostrarResumen() {
         List<Producto> seleccionados = adapter.getProductosSeleccionados();
-        if (seleccionados.isEmpty()) {
+        if (seleccionados.isEmpty() && cantidadTapers == 0) {
             Toast.makeText(this, "No hay productos seleccionados", Toast.LENGTH_SHORT).show();
             return;
         }
 
         // Crear mensaje del resumen
         StringBuilder mensaje = new StringBuilder("RESUMEN DE PEDIDO\n\n");
-        double total = 0;
+        double totalProductos = 0;
 
+        // Productos
         for (Producto p : seleccionados) {
             double subtotal = p.getCantidad() * p.getPrecio();
             mensaje.append("• ").append(p.getNombre())
                     .append(" x").append(p.getCantidad())
                     .append(" = S/. ").append(String.format(Locale.getDefault(), "%,.2f", subtotal))
                     .append("\n");
-            total += subtotal;
+            totalProductos += subtotal;
         }
 
-        mensaje.append("\nTOTAL: S/. ").append(String.format(Locale.getDefault(), "%,.2f", total));
+        // Tapers
+        double totalTapersCalculado = cantidadTapers * PRECIO_TAPER;
+        if (cantidadTapers > 0) {
+            mensaje.append("\n• Tapers")
+                    .append(" x").append(cantidadTapers)
+                    .append(" = S/. ").append(String.format(Locale.getDefault(), "%,.2f", totalTapersCalculado))
+                    .append("\n");
+        }
+
+        double totalGeneral = totalProductos + totalTapersCalculado;
+
+        mensaje.append("\n━━━━━━━━━━━━━━━━━━━━\n");
+        mensaje.append("TOTAL: S/. ").append(String.format(Locale.getDefault(), "%,.2f", totalGeneral));
 
         // Mostrar diálogo
         new MaterialAlertDialogBuilder(this)
@@ -159,8 +262,11 @@ public class OrdenActivity extends AppCompatActivity implements ProductoOrdenAda
                 .setMessage(mensaje.toString())
                 .setPositiveButton("Confirmar", (dialog, which) -> {
                     Toast.makeText(this, "Pedido confirmado exitosamente", Toast.LENGTH_SHORT).show();
+                    // Limpiar todo
                     adapter.limpiarCantidades();
-                    ProductoRepository.getInstance().resetCantidades();
+                    productoRepository.resetCantidades();
+                    cantidadTapers = 0;
+                    actualizarTextoBotonTapers();
                     fabResumen.setText("Ver Resumen");
                     fabResumen.setVisibility(View.GONE);
                 })
@@ -171,20 +277,12 @@ public class OrdenActivity extends AppCompatActivity implements ProductoOrdenAda
 
     @Override
     public void onCantidadChanged(Producto producto) {
-        // Actualizar contador en FAB si es necesario
-        List<Producto> seleccionados = adapter.getProductosSeleccionados();
-        int totalItems = 0;
-        for (Producto p : seleccionados) {
-            totalItems += p.getCantidad();
-        }
+        // Este método es necesario por la interfaz
+    }
 
-        if (totalItems > 0) {
-            fabResumen.setText("Ver Resumen (" + totalItems + ")");
-            fabResumen.setVisibility(View.VISIBLE);
-        } else {
-            fabResumen.setText("Ver Resumen");
-            fabResumen.setVisibility(View.GONE);
-        }
+    @Override
+    public void onTotalItemsChanged(int totalItems) {
+        actualizarResumenButton();
     }
 
     @Override

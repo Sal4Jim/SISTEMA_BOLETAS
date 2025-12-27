@@ -4,11 +4,13 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.mypk2.app.R;
 import com.mypk2.app.model.Producto;
+import com.mypk2.app.utils.ImageLoader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -19,6 +21,7 @@ public class ProductoOrdenAdapter extends RecyclerView.Adapter<ProductoOrdenAdap
 
     public interface OnCantidadChangeListener {
         void onCantidadChanged(Producto producto);
+        void onTotalItemsChanged(int totalItems);
     }
 
     public ProductoOrdenAdapter(OnCantidadChangeListener listener) {
@@ -38,6 +41,14 @@ public class ProductoOrdenAdapter extends RecyclerView.Adapter<ProductoOrdenAdap
             if (p.getCantidad() > 0) seleccionados.add(p);
         }
         return seleccionados;
+    }
+
+    public int getTotalItems() {
+        int total = 0;
+        for (Producto p : productos) {
+            total += p.getCantidad();
+        }
+        return total;
     }
 
     public double getTotal() {
@@ -75,11 +86,13 @@ public class ProductoOrdenAdapter extends RecyclerView.Adapter<ProductoOrdenAdap
     }
 
     class ViewHolder extends RecyclerView.ViewHolder {
+        private final ImageView imageViewProducto;
         private final TextView textViewNombre, textViewPrecio, textViewCantidad, textViewEstado;
         private final Button buttonMenos, buttonMas;
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
+            imageViewProducto = itemView.findViewById(R.id.imageViewProducto);
             textViewNombre = itemView.findViewById(R.id.textViewNombre);
             textViewPrecio = itemView.findViewById(R.id.textViewPrecio);
             textViewCantidad = itemView.findViewById(R.id.textViewCantidad);
@@ -90,9 +103,11 @@ public class ProductoOrdenAdapter extends RecyclerView.Adapter<ProductoOrdenAdap
 
         void bind(Producto producto) {
             textViewNombre.setText(producto.getNombre());
-            // Usar String.format en lugar de DecimalFormat
             textViewPrecio.setText(String.format(Locale.getDefault(), "S/. %,.2f", producto.getPrecio()));
             textViewCantidad.setText(String.valueOf(producto.getCantidad()));
+
+            // Cargar imagen usando ImageLoader
+            ImageLoader.cargarImagenProducto(itemView.getContext(), imageViewProducto, producto);
 
             // Estado activo/inactivo
             if (!producto.isActivo()) {
@@ -100,11 +115,13 @@ public class ProductoOrdenAdapter extends RecyclerView.Adapter<ProductoOrdenAdap
                 buttonMenos.setEnabled(false);
                 buttonMas.setEnabled(false);
                 itemView.setAlpha(0.6f);
+                imageViewProducto.setAlpha(0.6f);
             } else {
                 textViewEstado.setVisibility(View.GONE);
                 buttonMenos.setEnabled(producto.getCantidad() > 0);
                 buttonMas.setEnabled(true);
                 itemView.setAlpha(1f);
+                imageViewProducto.setAlpha(1f);
             }
 
             buttonMenos.setOnClickListener(v -> {
@@ -112,7 +129,10 @@ public class ProductoOrdenAdapter extends RecyclerView.Adapter<ProductoOrdenAdap
                     producto.setCantidad(producto.getCantidad() - 1);
                     textViewCantidad.setText(String.valueOf(producto.getCantidad()));
                     buttonMenos.setEnabled(producto.getCantidad() > 0);
-                    if (listener != null) listener.onCantidadChanged(producto);
+                    if (listener != null) {
+                        listener.onCantidadChanged(producto);
+                        listener.onTotalItemsChanged(getTotalItems());
+                    }
                 }
             });
 
@@ -121,7 +141,10 @@ public class ProductoOrdenAdapter extends RecyclerView.Adapter<ProductoOrdenAdap
                     producto.setCantidad(producto.getCantidad() + 1);
                     textViewCantidad.setText(String.valueOf(producto.getCantidad()));
                     buttonMenos.setEnabled(true);
-                    if (listener != null) listener.onCantidadChanged(producto);
+                    if (listener != null) {
+                        listener.onCantidadChanged(producto);
+                        listener.onTotalItemsChanged(getTotalItems());
+                    }
                 }
             });
         }

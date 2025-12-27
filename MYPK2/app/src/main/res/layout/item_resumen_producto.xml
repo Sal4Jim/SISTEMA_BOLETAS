@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="8dp"
+    android:background="?android:attr/selectableItemBackground">
+
+    <!-- Nombre del producto -->
+    <TextView
+        android:id="@+id/textViewNombre"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="3"
+        android:text="Producto"
+        android:textSize="14sp"
+        android:maxLines="2"
+        android:ellipsize="end" />
+
+    <!-- Cantidad -->
+    <TextView
+        android:id="@+id/textViewCantidad"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="x1"
+        android:textSize="14sp"
+        android:gravity="center" />
+
+    <!-- Precio unitario -->
+    <TextView
+        android:id="@+id/textViewPrecio"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="2"
+        android:text="S/. 0.00"
+        android:textSize="14sp"
+        android:gravity="center" />
+
+    <!-- Subtotal -->
+    <TextView
+        android:id="@+id/textViewSubtotal"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="2"
+        android:text="S/. 0.00"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:gravity="end" />
+
+</LinearLayout>

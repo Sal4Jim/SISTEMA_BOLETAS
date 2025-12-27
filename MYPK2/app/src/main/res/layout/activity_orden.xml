@@ -75,7 +75,7 @@
                         android:id="@+id/chipMenu"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Solo activos"
+                        android:text="Menú"
                         app:chipBackgroundColor="@color/secondary" />
 
                 </com.google.android.material.chip.ChipGroup>
@@ -121,19 +121,42 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/filterCard" />
 
-        <!-- Botón Resumen -->
-        <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
-            android:id="@+id/fabResumen"
+        <!-- Botones flotantes -->
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="16dp"
-            android:text="Ver Resumen"
-            android:textColor="@android:color/white"
-            app:icon="@drawable/ic_receipt"
-            app:iconTint="@android:color/white"
-            app:backgroundTint="#FF6B35"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <!-- Botón Tapers -->
+            <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+                android:id="@+id/fabTapers"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:text="Tapers: 0"
+                android:textColor="@android:color/white"
+                app:icon="@drawable/ic_tapers"
+                app:iconTint="@android:color/white"
+                app:backgroundTint="#4CAF50"
+                app:cornerRadius="12dp" />
+
+            <!-- Botón Resumen -->
+            <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+                android:id="@+id/fabResumen"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Ver Resumen"
+                android:textColor="@android:color/white"
+                app:icon="@drawable/ic_receipt"
+                app:iconTint="@android:color/white"
+                app:backgroundTint="#FF6B35"
+                app:cornerRadius="12dp" />
+
+        </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

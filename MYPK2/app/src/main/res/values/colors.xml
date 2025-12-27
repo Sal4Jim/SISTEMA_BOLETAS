@@ -37,6 +37,8 @@
     <color name="primary_light">#FF8E5C</color>
 
     <color name="secondary">#4ECDC4</color>
+    <color name="tertiary">#705C2E</color> <!-- AGREGAR ESTA LÍNEA -->
+
     <color name="background">#F8F9FA</color>
     <color name="surface">#FFFFFF</color>
 
@@ -53,4 +55,7 @@
 
     <color name="divider">#E0E0E0</color>
     <color name="card_stroke">#EEEEEE</color>
+
+    <color name="taper_green">#4CAF50</color>
+    <color name="taper_green_light">#E8F5E9</color>
 </resources>
