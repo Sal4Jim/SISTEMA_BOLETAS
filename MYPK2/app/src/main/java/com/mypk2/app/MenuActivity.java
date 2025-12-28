@@ -227,6 +227,9 @@ public class MenuActivity extends AppCompatActivity implements ProductoOrdenAdap
             gridMesas.addView(btnMesa);
         }
 
+        List<Double> preciosEntradas = new ArrayList<>();
+        List<Double> preciosMenus = new ArrayList<>();
+
         for (Producto p : productosSeleccionados) {
             double subtotal = p.getCantidad() * p.getPrecio();
             resumenPedido.texto.append("• ").append(p.getNombre())
@@ -234,6 +237,38 @@ public class MenuActivity extends AppCompatActivity implements ProductoOrdenAdap
                     .append(" = S/. ").append(String.format(Locale.getDefault(), "%,.2f", subtotal))
                     .append("\n");
             resumenPedido.total += subtotal;
+
+            if (p.getIdCategoria() == 4) { // Entrada
+                for (int k = 0; k < p.getCantidad(); k++) {
+                    preciosEntradas.add(p.getPrecio());
+                }
+            } else if (p.getIdCategoria() == 1) { // Menu
+                for (int k = 0; k < p.getCantidad(); k++) {
+                    preciosMenus.add(p.getPrecio());
+                }
+            }
+        }
+
+        // Lógica de Combos: Entrada (4) + Menu (1) = 12 soles
+        java.util.Collections.sort(preciosEntradas, java.util.Collections.reverseOrder());
+        java.util.Collections.sort(preciosMenus, java.util.Collections.reverseOrder());
+
+        int numCombos = Math.min(preciosEntradas.size(), preciosMenus.size());
+        if (numCombos > 0) {
+            double descuentoTotal = 0;
+            for (int i = 0; i < numCombos; i++) {
+                double precioOriginal = preciosEntradas.get(i) + preciosMenus.get(i);
+                if (precioOriginal > 12.0) {
+                    descuentoTotal += (precioOriginal - 12.0);
+                }
+            }
+
+            if (descuentoTotal > 0) {
+                resumenPedido.total -= descuentoTotal;
+                resumenPedido.texto.append("• DESCUENTO COMBO (x").append(numCombos).append(")")
+                        .append(" = -S/. ").append(String.format(Locale.getDefault(), "%,.2f", descuentoTotal))
+                        .append("\n");
+            }
         }
 
         if (cantidadTapers > 0) {
