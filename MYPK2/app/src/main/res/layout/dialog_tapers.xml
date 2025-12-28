@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:gravity="center">
+
+    <!-- Icono -->
+    <ImageView
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:src="@drawable/ic_tapers"
+        android:tint="#4CAF50"
+        android:layout_marginBottom="16dp" />
+
+    <!-- Título -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Tapers para llevar"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:textColor="#212121"
+        android:layout_marginBottom="8dp" />
+
+    <!-- Precio unitario -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Precio: S/. 1.00 c/u"
+        android:textSize="14sp"
+        android:textColor="#666666"
+        android:layout_marginBottom="24dp" />
+
+    <!-- Contador -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginBottom="16dp">
+
+        <!-- Botón Menos -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/buttonMenosTaper"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:text="−"
+            android:textSize="20sp"
+            app:cornerRadius="24dp"
+            app:strokeColor="#4CAF50"
+            app:strokeWidth="1dp" />
+
+        <!-- Cantidad -->
+        <TextView
+            android:id="@+id/textViewCantidadTapers"
+            android:layout_width="60dp"
+            android:layout_height="48dp"
+            android:layout_marginHorizontal="16dp"
+            android:gravity="center"
+            android:text="0"
+            android:textColor="#212121"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:background="#F5F5F5" />
+
+        <!-- Botón Más -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/buttonMasTaper"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:text="+"
+            android:textSize="20sp"
+            app:cornerRadius="24dp"
+            app:strokeColor="#4CAF50"
+            app:strokeWidth="1dp" />
+
+    </LinearLayout>
+
+    <!-- Total -->
+    <TextView
+        android:id="@+id/textViewTotalTapers"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Total: S/. 0.00"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:textColor="#4CAF50"
+        android:layout_marginTop="8dp" />
+
+</LinearLayout>

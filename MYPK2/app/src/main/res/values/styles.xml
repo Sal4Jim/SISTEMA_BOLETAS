@@ -71,4 +71,10 @@
         <item name="iconTint">@color/primary</item>
         <item name="android:padding">0dp</item>
     </style>
+
+    <!-- Shape appearance for TextInputLayout -->
+    <style name="ShapeAppearance.MaterialComponents.MediumComponent" parent="ShapeAppearance.MaterialComponents.SmallComponent">
+        <item name="cornerSize">8dp</item>
+    </style>
+
 </resources>

@@ -19,6 +19,7 @@ public class EditarMenuActivity extends AppCompatActivity {
     private ProductoEditarAdapter adapter;
     private View emptyState;
     private TextView textViewTotalProductos, textViewActivos, textViewInactivos;
+    private ProductoRepository productoRepository;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,6 +31,9 @@ public class EditarMenuActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setTitle("Editar Menú");
+
+        // Inicializar repositorio
+        productoRepository = ProductoRepository.getInstance(this);
 
         // Inicializar vistas
         initViews();
@@ -48,7 +52,7 @@ public class EditarMenuActivity extends AppCompatActivity {
 
         // Configurar RecyclerView
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        adapter = new ProductoEditarAdapter();
+        adapter = new ProductoEditarAdapter(productoRepository);
         recyclerView.setAdapter(adapter);
 
         // Configurar listener para actualizar estadísticas cuando cambie el estado
@@ -56,7 +60,9 @@ public class EditarMenuActivity extends AppCompatActivity {
     }
 
     private void cargarProductos() {
-        List<Producto> productos = ProductoRepository.getInstance().getProductos();
+        // Cargar productos de ID_CATEGORIA 1 (Menú) y 4 (Entrada)
+        productoRepository.cargarProductosDesdeAPI("1,4");
+        List<Producto> productos = productoRepository.getProductos();
         adapter.setProductos(productos);
 
         // Mostrar estado vacío si no hay productos
@@ -70,11 +76,9 @@ public class EditarMenuActivity extends AppCompatActivity {
     }
 
     private void actualizarEstadisticas() {
-        ProductoRepository repository = ProductoRepository.getInstance();
-
-        int total = repository.getTotalProductos();
-        int activos = repository.getProductosActivosCount();
-        int inactivos = repository.getProductosInactivosCount();
+        int total = productoRepository.getTotalProductos();
+        int activos = productoRepository.getProductosActivosCount();
+        int inactivos = productoRepository.getProductosInactivosCount();
 
         textViewTotalProductos.setText(String.valueOf(total));
         textViewActivos.setText(String.valueOf(activos));
