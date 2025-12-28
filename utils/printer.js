@@ -59,7 +59,7 @@ const imprimirTicket = (venta) => {
                 // Información de la venta
                 printer
                     .align('lt')
-                    .text(`Fecha Emision: ${new Date(venta.fecha_emision).toLocaleString('es-PE')}`)
+                    .text(`Fecha Emision: ${new Date(venta.fecha_emision || Date.now()).toLocaleString('es-PE')}`)
                     .text(`Cliente: CLIENTE VARIOS`) // Placeholder hasta tener clientes
                     .text(`DNI/RUC: 00000000`)       // Placeholder
                     .text(`Moneda: SOLES`)
@@ -142,8 +142,8 @@ const imprimirTicket = (venta) => {
     });
 };
 
-// Función para imprimir el TICKET DE PEDIDO (COCINA/BARRA)
-const imprimirTicketPedido = (pedido) => {
+// Función para imprimir el TICKET DE COMANDA (COCINA/BARRA)
+const imprimirTicketComanda = (ticket) => {
     return new Promise((resolve, reject) => {
         try {
             const PRINTER_IP = '192.168.100.64'; 
@@ -160,54 +160,60 @@ const imprimirTicketPedido = (pedido) => {
                 }
 
                 // Resetear impresora
-                device.write(Buffer.from([0x1B, 0x40, 0x1C, 0x2E, 0x1B, 0x74, 0x02]));
+                device.write(Buffer.from([0x1B, 0x40, 0x1C, 0x2E, 0x1B, 0x74, 0x02, 0x1B, 0x21, 0x00, 0x1D, 0x21, 0x00]));
 
                 printer
-                    .align('ct')
-                    .size(1, 1) // Doble altura
-                    .text('*** NUEVO PEDIDO ***')
-                    .size(0, 0) // Normal
-                    .text('--------------------------------')
+                    .encode('cp850')
                     .align('lt')
                     .size(1, 1) // Doble altura para la mesa
-                    .text(`MESA: ${pedido.mesa}`)
+                    .text(`MESA: ${ticket.mesa}`)
                     .size(0, 0)
-                    .text(`Fecha: ${new Date().toLocaleString('es-PE')}`)
-                    .text(`Ticket ID: #${pedido.id_ticket}`)
-                    .text('--------------------------------')
-                    .size(1, 0) // Doble ancho para encabezados
+                    .text(`ID: #${ticket.id_ticket}`)
+                    .text(`Fecha: ${new Date(ticket.fecha_emision || Date.now()).toLocaleString('es-PE')}`)
+                    .text('------------------------------------------------')
+                    .size(0, 0)
                     .text('CANT  DESCRIPCION')
-                    .size(0, 0)
-                    .text('--------------------------------');
+                    .text('------------------------------------------------');
 
                 // Listar productos
-                if (pedido.productos && pedido.productos.length > 0) {
-                    pedido.productos.forEach(prod => {
+                if (ticket.productos && ticket.productos.length > 0) {
+                    ticket.productos.forEach(prod => {
                         const cantidad = String(prod.cantidad);
                         // Intentamos usar el nombre que viene del JSON, si no, un genérico
                         const nombre = prod.nombre || `Prod ID:${prod.id_producto}`;
 
-                        // Formato: Cantidad a la izquierda, Nombre a la derecha
-                        // Usamos size(1,1) para que el cocinero vea bien
+                        // Formato: Cantidad (4) + Nombre
+                        const colCant = cantidad.padEnd(4).substring(0, 4);
+
                         printer
-                            .size(1, 1) 
-                            .text(`${cantidad} x ${nombre}`);
+                            .size(1, 1) // Texto grande para cocina
+                            .text(`${colCant} ${nombre}`)
+                            .size(0, 0);
                     });
                 }
 
-                printer.size(0, 0).text('--------------------------------');
+                printer.size(0, 0).text('------------------------------------------------');
 
                 // Notas
-                if (pedido.notas) {
+                if (ticket.notas) {
                     printer
                         .align('ct')
                         .text('--- NOTAS ---')
-                        .size(1, 0)
-                        .text(pedido.notas)
-                        .size(0, 0);
+                        .size(1, 1)
+                        .text(ticket.notas)
+                        .size(0, 0)
+                        .text('------------------------------------------------');
                 }
 
-                printer.cut().close();
+                // Total Estimado (Si existe, útil para pre-cuenta)
+                if (ticket.total_estimado && ticket.total_estimado > 0) {
+                    printer
+                        .align('rt')
+                        .text(`TOTAL EST.: S/ ${Number(ticket.total_estimado).toFixed(2)}`)
+                        .align('lt');
+                }
+
+                printer.text('.').cut().close();
                 resolve(true);
             });
         } catch (err) {
@@ -216,4 +222,75 @@ const imprimirTicketPedido = (pedido) => {
     });
 };
 
-module.exports = { imprimirTicket, imprimirTicketPedido };
+// Función para imprimir el REPORTE DIARIO DE VENTAS
+const imprimirReporteDiario = (data) => {
+    return new Promise((resolve, reject) => {
+        try {
+            const PRINTER_IP = '192.168.100.64'; 
+            const PRINTER_PORT = 9100; 
+
+            const device = new Network(PRINTER_IP, PRINTER_PORT);
+            const options = { encoding: "cp850" };
+            const printer = new escpos.Printer(device, options);
+
+            device.open(function (error) {
+                if (error) {
+                    console.error("Error al abrir impresora para reporte:", error);
+                    return reject(error);
+                }
+
+                // Resetear impresora
+                device.write(Buffer.from([0x1B, 0x40, 0x1C, 0x2E, 0x1B, 0x74, 0x02, 0x1B, 0x21, 0x00, 0x1D, 0x21, 0x00]));
+
+                printer
+                    .encode('cp850')
+                    .align('ct')
+                    .size(1, 1)
+                    .text('REPORTE DIARIO')
+                    .size(0, 0)
+                    .text('------------------------------------------------')
+                    .align('lt')
+                    .text(`FECHA: ${data.fecha}`)
+                    .text(`IMPRESO: ${new Date().toLocaleTimeString('es-PE')}`)
+                    .text('------------------------------------------------')
+                    .text('CANT  PRODUCTO')
+                    .text('------------------------------------------------');
+
+                if (data.productos && data.productos.length > 0) {
+                    data.productos.forEach(prod => {
+                        const cantidad = String(prod.cantidad);
+                        const nombre = prod.nombre;
+                        
+                        // Formato: Cantidad (4) + Nombre
+                        const colCant = cantidad.padEnd(4).substring(0, 4);
+                        
+                        printer
+                            .size(0, 0)
+                            .text(`${colCant} ${nombre}`);
+                    });
+                } else {
+                    printer.text('No hay ventas registradas.');
+                }
+
+                printer.text('------------------------------------------------');
+                
+                printer
+                    .align('rt')
+                    .size(1, 1)
+                    .text(`TOTAL DIA: S/ ${Number(data.total).toFixed(2)}`)
+                    .size(0, 0)
+                    .align('lt')
+                    .text('------------------------------------------------')
+                    .text('.')
+                    .cut()
+                    .close();
+                
+                resolve(true);
+            });
+        } catch (err) {
+            reject(err);
+        }
+    });
+};
+
+module.exports = { imprimirTicket, imprimirTicketComanda, imprimirReporteDiario };
