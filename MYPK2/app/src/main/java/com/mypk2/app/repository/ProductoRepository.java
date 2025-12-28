@@ -23,6 +23,7 @@ public class ProductoRepository {
     private List<Categoria> categorias = new ArrayList<>();
     private Map<Integer, Producto> productosMap = new HashMap<>();
     private Map<Integer, Categoria> categoriasMap = new HashMap<>();
+    private Map<Integer, Integer> cantidadesGuardadas = new HashMap<>(); // Persistencia global
     private MutableLiveData<List<Producto>> productosLiveData = new MutableLiveData<>();
     private MutableLiveData<List<Categoria>> categoriasLiveData = new MutableLiveData<>();
     private Context context;
@@ -69,16 +70,29 @@ public class ProductoRepository {
                 if (response.isSuccessful() && response.body() != null) {
                     ProductoResponse productoResponse = response.body();
                     if (productoResponse.isSuccess()) {
+                        // 1. Guardar cantidades actuales antes de limpiar
+                        for (Producto p : productos) {
+                            if (p.getCantidad() > 0) {
+                                cantidadesGuardadas.put(p.getId(), p.getCantidad());
+                            }
+                        }
+
                         productos.clear();
                         productosMap.clear();
 
                         for (Producto producto : productoResponse.getProductos()) {
+                            // 2. Restaurar cantidades si existen en memoria
+                            if (cantidadesGuardadas.containsKey(producto.getId())) {
+                                producto.setCantidad(cantidadesGuardadas.get(producto.getId()));
+                            }
+
                             productos.add(producto);
                             productosMap.put(producto.getId(), producto);
                         }
 
                         productosLiveData.postValue(new ArrayList<>(productos));
-                        mostrarToast("Productos cargados: " + productos.size());
+                        // mostrarToast("Productos cargados: " + productos.size()); // Comentado para no
+                        // spammear
                     } else {
                         mostrarToast("Error: " + productoResponse.getMessage());
                         productosLiveData.postValue(new ArrayList<>());
@@ -254,6 +268,7 @@ public class ProductoRepository {
     }
 
     public void resetCantidades() {
+        cantidadesGuardadas.clear(); // Limpiar persistencia
         for (Producto p : productos) {
             p.setCantidad(0);
         }
