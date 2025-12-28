@@ -2,7 +2,7 @@ const mysql = require('mysql2/promise');
 
 const dbConfig = {
     host: 'localhost',
-    user: 'root', 
+    user: 'root',
     password: '',
     database: 'boletera_bd',
     charset: 'utf8mb4',
@@ -22,7 +22,6 @@ const testConnection = async () => {
         return { success: false, message: 'No se pudo conectar a la base de datos.', error: error.message };
     }
 };
-
 
 module.exports = {
     pool,
