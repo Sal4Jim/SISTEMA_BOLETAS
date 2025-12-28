@@ -93,7 +93,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const ventaData = {
             total_venta: totalVenta,
-            productos: carrito
+            productos: carrito,
+            id_pago: 1 // Por defecto Efectivo (Asegúrate de tener este ID en la tabla metodo_pago)
         };
 
         try {
