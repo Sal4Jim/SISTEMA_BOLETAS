@@ -222,4 +222,75 @@ const imprimirTicketComanda = (ticket) => {
     });
 };
 
-module.exports = { imprimirTicket, imprimirTicketComanda };
+// Función para imprimir el REPORTE DIARIO DE VENTAS
+const imprimirReporteDiario = (data) => {
+    return new Promise((resolve, reject) => {
+        try {
+            const PRINTER_IP = '192.168.100.64'; 
+            const PRINTER_PORT = 9100; 
+
+            const device = new Network(PRINTER_IP, PRINTER_PORT);
+            const options = { encoding: "cp850" };
+            const printer = new escpos.Printer(device, options);
+
+            device.open(function (error) {
+                if (error) {
+                    console.error("Error al abrir impresora para reporte:", error);
+                    return reject(error);
+                }
+
+                // Resetear impresora
+                device.write(Buffer.from([0x1B, 0x40, 0x1C, 0x2E, 0x1B, 0x74, 0x02, 0x1B, 0x21, 0x00, 0x1D, 0x21, 0x00]));
+
+                printer
+                    .encode('cp850')
+                    .align('ct')
+                    .size(1, 1)
+                    .text('REPORTE DIARIO')
+                    .size(0, 0)
+                    .text('------------------------------------------------')
+                    .align('lt')
+                    .text(`FECHA: ${data.fecha}`)
+                    .text(`IMPRESO: ${new Date().toLocaleTimeString('es-PE')}`)
+                    .text('------------------------------------------------')
+                    .text('CANT  PRODUCTO')
+                    .text('------------------------------------------------');
+
+                if (data.productos && data.productos.length > 0) {
+                    data.productos.forEach(prod => {
+                        const cantidad = String(prod.cantidad);
+                        const nombre = prod.nombre;
+                        
+                        // Formato: Cantidad (4) + Nombre
+                        const colCant = cantidad.padEnd(4).substring(0, 4);
+                        
+                        printer
+                            .size(0, 0)
+                            .text(`${colCant} ${nombre}`);
+                    });
+                } else {
+                    printer.text('No hay ventas registradas.');
+                }
+
+                printer.text('------------------------------------------------');
+                
+                printer
+                    .align('rt')
+                    .size(1, 1)
+                    .text(`TOTAL DIA: S/ ${Number(data.total).toFixed(2)}`)
+                    .size(0, 0)
+                    .align('lt')
+                    .text('------------------------------------------------')
+                    .text('.')
+                    .cut()
+                    .close();
+                
+                resolve(true);
+            });
+        } catch (err) {
+            reject(err);
+        }
+    });
+};
+
+module.exports = { imprimirTicket, imprimirTicketComanda, imprimirReporteDiario };

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporte Diario - PK2</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="headerDinamico"></div>
+
+    <main class="dashboard-container">
+        <div class="header-actions" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
+            <div>
+                <h1 style="color: var(--primary); margin: 0;">Reporte de Tickets</h1>
+                <p id="reloj-tiempo-real" style="color: var(--text-muted); margin: 5px 0 0 0; font-weight: 500;"></p>
+            </div>
+            
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <label for="fecha-reporte" style="font-weight: 600;">Fecha:</label>
+                <input type="date" id="fecha-reporte" style="padding: 8px; border: 1px solid var(--border-color); border-radius: 5px;">
+                <button class="btn-agregar" id="btn-imprimir-reporte" style="width: auto; padding: 8px 20px; background-color: var(--secondary);">🖨️ Imprimir Reporte</button>
+            </div>
+        </div>
+
+        <!-- Tarjetas de Resumen -->
+        <div class="cards-grid" style="grid-template-columns: repeat(2, 1fr); margin-bottom: 30px; gap: 20px;">
+            <div class="card" style="padding: 20px;">
+                <h3 style="margin: 0; font-size: 1rem;">Total Tickets</h3>
+                <p id="total-tickets-count" style="font-size: 2rem; font-weight: bold; color: var(--primary); margin: 10px 0;">0</p>
+            </div>
+            <div class="card" style="padding: 20px;">
+                <h3 style="margin: 0; font-size: 1rem;">Total Estimado</h3>
+                <p id="total-estimado-sum" style="font-size: 2rem; font-weight: bold; color: var(--success); margin: 10px 0;">S/ 0.00</p>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="crud-table">
+                <thead>
+                    <tr>
+                        <th>Hora</th>
+                        <th>ID Ticket</th>
+                        <th>Mesa</th>
+                        <th>Notas</th>
+                        <th>Total Est.</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-reportes-body"></tbody>
+            </table>
+        </div>
+    </main>
+
+    <div id="footerDinamico"></div>
+    <script src="js/index.js"></script>
+    <script src="js/reportes.js"></script>
+</body>
+</html>

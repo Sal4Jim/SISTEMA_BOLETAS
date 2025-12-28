@@ -1,6 +1,6 @@
 const Ticket = require('../models/ticket.model');
 const Product = require('../models/product.model');
-const { imprimirTicketComanda } = require('../utils/printer');
+const { imprimirTicketComanda, imprimirReporteDiario } = require('../utils/printer');
 
 const createTicketAndPrint = async (req, res) => {
     const ticketData = req.body;
@@ -51,4 +51,37 @@ const createTicketAndPrint = async (req, res) => {
     }
 };
 
-module.exports = { createTicketAndPrint };
+const getTicketsByDate = async (req, res) => {
+    try {
+        const { fecha } = req.query; // Esperamos ?fecha=YYYY-MM-DD
+        if (!fecha) return res.status(400).json({ message: 'Se requiere el parámetro fecha' });
+
+        const tickets = await Ticket.findByDate(fecha);
+        res.json(tickets);
+    } catch (error) {
+        res.status(500).json({ message: 'Error al obtener reporte', error: error.message });
+    }
+};
+
+const printDailyReport = async (req, res) => {
+    try {
+        const { fecha } = req.body;
+        if (!fecha) return res.status(400).json({ message: 'Se requiere la fecha para imprimir el reporte' });
+
+        // Obtener estadísticas del modelo
+        const stats = await Ticket.getDailyStats(fecha);
+        
+        try {
+            await imprimirReporteDiario({ fecha, ...stats });
+            res.json({ message: 'Reporte impreso correctamente' });
+        } catch (printError) {
+            console.error("Error imprimiendo reporte:", printError);
+            res.status(500).json({ message: 'Error al conectar con la impresora. Revise la IP y conexión.' });
+        }
+    } catch (error) {
+        console.error("Error en printDailyReport:", error);
+        res.status(500).json({ message: 'Error al generar reporte', error: error.message });
+    }
+};
+
+module.exports = { createTicketAndPrint, getTicketsByDate, printDailyReport };
