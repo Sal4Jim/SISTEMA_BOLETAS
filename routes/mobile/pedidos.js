@@ -101,8 +101,9 @@ router.post('/', async (req, res) => {
         console.error('Error al registrar pedido móvil:', error);
         res.status(500).json({
             success: false,
-            message: 'Error al registrar pedido',
-            error: error.message
+            message: 'Error al registrar pedido: ' + error.message,
+            sqlError: error.sqlMessage,
+            code: error.code
         });
     } finally {
         connection.release();
