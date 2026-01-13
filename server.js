@@ -67,12 +67,6 @@ const PORT = process.env.PORT || 3000;
 // Iniciar servidor
 app.listen(PORT, async () => {
     console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
-    console.log('📡 Endpoints disponibles:');
-    console.log('   GET  /api/test');
-    console.log('   GET  /test-db');
-    console.log('   GET  /api/mobile/productos');
-    console.log('   GET  /api/mobile/categorias');
-    console.log('   POST /api/mobile/pedidos');
 
     // Probar conexión a la base de datos al iniciar
     console.log('🔌 Probando conexión a la base de datos...');

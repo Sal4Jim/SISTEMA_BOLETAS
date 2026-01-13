@@ -24,7 +24,7 @@ const Ticket = {
             }
 
             await connection.commit();
-            
+
             // Retornamos el objeto completo con el ID generado
             return { id_ticket: idTicket, fecha_emision: new Date(), ...ticketData };
 
@@ -69,6 +69,45 @@ const Ticket = {
             return {
                 productos,
                 total: totalResult[0].total || 0
+            };
+        } finally {
+            connection.release();
+        }
+    },
+
+    getByIdWithDetails: async (idTicket) => {
+        const connection = await pool.getConnection();
+        try {
+            // 1. Obtener cabecera
+            const [ticketRows] = await connection.query('SELECT * FROM ticket WHERE id_ticket = ?', [idTicket]);
+            if (ticketRows.length === 0) return null;
+            const ticket = ticketRows[0];
+
+            // 2. Obtener detalles (productos)
+            const [detalles] = await connection.query(`
+                SELECT dt.cantidad, p.nombre, p.precio
+                FROM detalle_ticket dt
+                JOIN producto p ON dt.id_producto = p.id_producto
+                WHERE dt.id_ticket = ?
+            `, [idTicket]);
+
+            // 3. Formatear productos para que coincidan con lo que espera el printer
+            // El printer espera: nombre, precio_unitario, subtotal, cantidad
+            const productos = detalles.map(d => ({
+                nombre: d.nombre,
+                cantidad: d.cantidad,
+                precio_unitario: d.precio,
+                subtotal: d.cantidad * d.precio
+            }));
+
+            // Si el ticket no tiene total_venta (porque es un ticket de comanda convertido),
+            // lo calculamos o usamos el total_estimado
+            const totalCalculado = productos.reduce((acc, curr) => acc + curr.subtotal, 0);
+
+            return {
+                ...ticket,
+                total_venta: ticket.total_estimado || totalCalculado, // Usamos total_estimado si existe
+                productos
             };
         } finally {
             connection.release();

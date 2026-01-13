@@ -67,8 +67,8 @@ router.post('/', async (req, res) => {
             // Insertar boleta
             const [boletaResult] = await connection.execute(
                 `INSERT INTO boleta 
-                 (serie, correlativo, total_venta, metodo_pago, id_cliente, id_ticket) 
-                 VALUES ('B001', ?, ?, 'EFECTIVO', 1, ?)`,
+                 (serie, correlativo, total_venta, id_pago, id_cliente, id_ticket) 
+                 VALUES ('B001', ?, ?, 1, 1, ?)`,
                 [correlativo, parseFloat(total_estimado), id_ticket]
             );
 
