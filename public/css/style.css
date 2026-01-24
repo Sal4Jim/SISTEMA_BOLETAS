@@ -10,8 +10,8 @@
     --text-muted: #7f8c8d;
     --border-color: #ffe0b2;
     --success: #27ae60;
-    --shadow-sm: 0 2px 8px rgba(0,0,0,0.05);
-    --shadow-md: 0 5px 15px rgba(0,0,0,0.1);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 5px 15px rgba(0, 0, 0, 0.1);
     --radius: 10px;
 }
 
@@ -61,7 +61,7 @@ nav .nav-links {
 }
 
 nav .nav-link {
-    color: rgba(255,255,255,0.8);
+    color: rgba(255, 255, 255, 0.8);
     text-decoration: none;
     font-weight: 500;
     font-size: 0.95rem;
@@ -70,9 +70,10 @@ nav .nav-link {
     transition: all 0.3s ease;
 }
 
-nav .nav-link:hover, nav .nav-link.active {
+nav .nav-link:hover,
+nav .nav-link.active {
     color: white;
-    background-color: rgba(255,255,255,0.1);
+    background-color: rgba(255, 255, 255, 0.1);
 }
 
 /* --- DASHBOARD (INDEX) --- */
@@ -152,7 +153,8 @@ nav .nav-link:hover, nav .nav-link.active {
 /* --- PUNTO DE VENTA (BOLETERA) --- */
 main {
     padding: 20px;
-    flex: 1; /* Empuja el footer hacia abajo */
+    flex: 1;
+    /* Empuja el footer hacia abajo */
 }
 
 .venta-container {
@@ -303,13 +305,13 @@ main {
     .venta-container {
         flex-direction: column;
     }
-    
+
     .carrito-container {
         width: 100%;
         position: static;
         box-sizing: border-box;
     }
-    
+
     nav {
         flex-direction: column;
         gap: 15px;
@@ -329,7 +331,8 @@ footer {
     margin-top: auto;
     font-size: 0.9rem;
     border-top: 4px solid var(--secondary);
-    width: 100%; /* Asegura que ocupe todo el ancho */
+    width: 100%;
+    /* Asegura que ocupe todo el ancho */
     box-sizing: border-box;
 }
 
@@ -343,7 +346,8 @@ footer {
     box-shadow: var(--shadow-sm);
 }
 
-.crud-table th, .crud-table td {
+.crud-table th,
+.crud-table td {
     padding: 15px;
     text-align: left;
     border-bottom: 1px solid var(--border-color);
@@ -354,7 +358,8 @@ footer {
     color: white;
 }
 
-.btn-editar, .btn-eliminar {
+.btn-editar,
+.btn-eliminar {
     padding: 6px 12px;
     border: none;
     border-radius: 4px;
@@ -363,8 +368,13 @@ footer {
     margin-right: 5px;
 }
 
-.btn-editar { background-color: var(--accent); }
-.btn-eliminar { background-color: #e74c3c; }
+.btn-editar {
+    background-color: var(--accent);
+}
+
+.btn-eliminar {
+    background-color: #e74c3c;
+}
 
 /* Modal */
 .modal {
@@ -375,16 +385,16 @@ footer {
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0,0,0,0.5);
+    background-color: rgba(0, 0, 0, 0.5);
 }
 
 .modal-content {
     background-color: var(--bg-card);
-    margin: 10% auto;
+    margin: 2% auto;
     padding: 30px;
     border-radius: var(--radius);
     width: 90%;
-    max-width: 500px;
+    max-width: 400px;
     box-shadow: var(--shadow-md);
 }
 
@@ -394,6 +404,8 @@ footer {
     font-size: 28px;
     font-weight: bold;
     cursor: pointer;
+    margin-top: 14px;
+
 }
 
 .form-group {
@@ -406,7 +418,8 @@ footer {
     font-weight: 500;
 }
 
-.form-group input, .form-group select {
+.form-group input,
+.form-group select {
     width: 100%;
     padding: 10px;
     border: 1px solid var(--border-color);

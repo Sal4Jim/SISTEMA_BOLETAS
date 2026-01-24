@@ -1,6 +1,6 @@
 const Ticket = require('../models/ticket.model');
 const Product = require('../models/product.model');
-const { imprimirTicketComanda, imprimirReporteDiario } = require('../utils/printer');
+const { imprimirTicketComanda, imprimirReporteDiario, imprimirNotaVenta } = require('../utils/printer');
 
 const createTicketAndPrint = async (req, res) => {
     const ticketData = req.body;
@@ -36,10 +36,10 @@ const createTicketAndPrint = async (req, res) => {
         // 4. Imprimir (No bloqueamos la respuesta si falla la impresión, pero avisamos)
         try {
             await imprimirTicketComanda(ticketParaImprimir);
-            res.status(201).json({ 
-                message: 'Pedido registrado y enviado a cocina.', 
+            res.status(201).json({
+                message: 'Pedido registrado y enviado a cocina.',
                 id_ticket: nuevoTicket.id_ticket,
-                ticket: nuevoTicket 
+                ticket: nuevoTicket
             });
         } catch (printError) {
             console.error("Error imprimiendo ticket cocina:", printError);
@@ -70,7 +70,7 @@ const printDailyReport = async (req, res) => {
 
         // Obtener estadísticas del modelo
         const stats = await Ticket.getDailyStats(fecha);
-        
+
         try {
             await imprimirReporteDiario({ fecha, ...stats });
             res.json({ message: 'Reporte impreso correctamente' });
@@ -84,4 +84,26 @@ const printDailyReport = async (req, res) => {
     }
 };
 
-module.exports = { createTicketAndPrint, getTicketsByDate, printDailyReport };
+const printNotaVenta = async (req, res) => {
+    try {
+        const { id_ticket } = req.body;
+        if (!id_ticket) return res.status(400).json({ message: 'Se requiere id_ticket' });
+
+        // 1. Obtener ticket con productos desde la BD
+        const ticketFull = await Ticket.getByIdWithDetails(id_ticket);
+
+        if (!ticketFull) {
+            return res.status(404).json({ message: 'Ticket no encontrado' });
+        }
+
+        // 2. Imprimir
+        await imprimirNotaVenta(ticketFull);
+        res.json({ message: 'Nota de venta impresa correctamente' });
+
+    } catch (error) {
+        console.error("Error al imprimir nota de venta:", error);
+        res.status(500).json({ message: 'Error al imprimir nota de venta', error: error.message });
+    }
+};
+
+module.exports = { createTicketAndPrint, getTicketsByDate, printDailyReport, printNotaVenta };
