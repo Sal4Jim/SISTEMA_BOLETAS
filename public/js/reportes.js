@@ -13,9 +13,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // 2. Reloj en tiempo real
     const actualizarReloj = () => {
         const ahora = new Date();
-        relojEl.textContent = ahora.toLocaleString('es-PE', { 
-            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', 
-            hour: '2-digit', minute: '2-digit', second: '2-digit' 
+        relojEl.textContent = ahora.toLocaleString('es-PE', {
+            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+            hour: '2-digit', minute: '2-digit', second: '2-digit'
         });
     };
     setInterval(actualizarReloj, 1000);
@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let sumaTotal = 0;
 
             if (tickets.length === 0) {
-                tablaBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No hay tickets registrados para esta fecha.</td></tr>';
+                tablaBody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No hay tickets registrados para esta fecha.</td></tr>';
             } else {
                 tickets.forEach(ticket => {
                     const hora = new Date(ticket.fecha_emision).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
@@ -47,6 +47,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         <td>${ticket.mesa}</td>
                         <td>${ticket.notas || '-'}</td>
                         <td>S/ ${Number(ticket.total_estimado || 0).toFixed(2)}</td>
+                        <td>
+                            <button class="btn-editar btn-imprimir-nota" data-id="${ticket.id_ticket}" style="width: auto; padding: 5px 10px; font-size: 0.85rem;">🖨️ Imprimir</button>
+                        </td>
                     `;
                     tablaBody.appendChild(tr);
                 });
@@ -63,8 +66,44 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // Eventos
+    tablaBody.addEventListener('click', async (e) => {
+        if (e.target.classList.contains('btn-imprimir-nota')) {
+            const idTicket = e.target.getAttribute('data-id');
+            const btn = e.target;
+
+            if (!confirm(`¿Imprimir Nota de Venta para Ticket #${idTicket}?`)) return;
+
+            // Feedback visual simple
+            const originalText = btn.textContent;
+            btn.textContent = '...';
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/tickets/print-nota', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id_ticket: idTicket })
+                });
+
+                const result = await res.json();
+
+                if (res.ok) {
+                    alert(result.message);
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Error al solicitar impresiónn.');
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }
+    });
+
     fechaInput.addEventListener('change', cargarReporte);
-    
+
     btnImprimir.addEventListener('click', async () => {
         const fecha = fechaInput.value;
         if (!fecha) return;
@@ -77,7 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ fecha })
             });
-            
+
             // Verificar si la respuesta es JSON válido antes de parsear
             const contentType = res.headers.get("content-type");
             if (contentType && contentType.indexOf("application/json") !== -1) {
@@ -98,7 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Error al solicitar impresión: ' + error.message);
         }
     });
-    
+
     // Carga inicial
     cargarReporte();
 });

@@ -14,16 +14,16 @@ const createBoletaAndPrint = async (req, res) => {
             // Combinamos los datos:
             // - ventaData: tiene la lista de 'productos' que envió el frontend
             // - nuevaBoleta: tiene el 'correlativo', 'id_boleta' y 'fecha_emision' generados por la BD
-            const ticketData = { 
-                ...ventaData, 
-                ...nuevaBoleta 
+            const ticketData = {
+                ...ventaData,
+                ...nuevaBoleta
             };
             await imprimirTicket(ticketData);
-            
+
             // Si todo fue bien (guardado e impreso)
-            res.status(201).json({ 
-                message: 'Venta registrada e ticket enviado a imprimir.', 
-                boleta: nuevaBoleta 
+            res.status(201).json({
+                message: 'Venta registrada e ticket enviado a imprimir.',
+                boleta: nuevaBoleta
             });
 
         } catch (printError) {
