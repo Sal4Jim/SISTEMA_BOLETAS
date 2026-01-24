@@ -15,7 +15,7 @@ public class RetrofitClient {
 
     // Para dispositivo físico con tu IP
     // Para dispositivo físico con tu IP
-    public static final String SERVER_URL = "http://192.168.100.176:3000";
+    public static final String SERVER_URL = "http://192.168.0.196:3000";
     public static final String BASE_URL = SERVER_URL + "/api/mobile/";
 
     // O puedes usar esta configuración dinámica:

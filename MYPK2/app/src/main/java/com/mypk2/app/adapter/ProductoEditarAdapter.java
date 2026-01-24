@@ -78,6 +78,9 @@ public class ProductoEditarAdapter extends RecyclerView.Adapter<ProductoEditarAd
         void bind(Producto producto) {
             textViewNombre.setText(producto.getNombre());
             textViewPrecio.setText(String.format(Locale.getDefault(), "S/. %,.2f", producto.getPrecio()));
+            // IMPORTANTE: Remover listener antes de cambiar el estado programáticamente
+            // para evitar que se dispare el evento por el reciclaje de vistas.
+            switchActivo.setOnCheckedChangeListener(null);
             switchActivo.setChecked(producto.isActivo());
 
             // Cargar imagen usando ImageLoader
@@ -97,8 +100,12 @@ public class ProductoEditarAdapter extends RecyclerView.Adapter<ProductoEditarAd
             }
 
             switchActivo.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                // Verificar si la posición es válida para evitar crashes raros
+                if (getAdapterPosition() == RecyclerView.NO_POSITION)
+                    return;
+
                 producto.setActivo(isChecked);
-                productoRepository.actualizarActivo(producto.getNombre(), isChecked);
+                productoRepository.actualizarActivo(producto.getId(), isChecked);
 
                 // Notificar cambio de estado
                 if (estadoChangeListener != null) {

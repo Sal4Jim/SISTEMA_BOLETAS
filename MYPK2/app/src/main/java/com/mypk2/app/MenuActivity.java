@@ -36,9 +36,11 @@ public class MenuActivity extends AppCompatActivity implements ProductoOrdenAdap
     private RecyclerView recyclerView;
     private ProductoOrdenAdapter adapter;
     private ExtendedFloatingActionButton fabResumen, fabTapers;
-    private int cantidadTapers = 0;
+    // private int cantidadTapers = 0; // REEMPLAZADO POR REPOSITORIO
     private final double PRECIO_TAPER = 1.0;
     private ProductoRepository productoRepository;
+    private List<Producto> listaCompletaProductos = new ArrayList<>();
+    private EditText editTextSearch;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,6 +61,15 @@ public class MenuActivity extends AppCompatActivity implements ProductoOrdenAdap
         cargarProductos();
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (adapter != null) {
+            adapter.notifyDataSetChanged();
+        }
+        actualizarBotones();
+    }
+
     private void initViews() {
         recyclerView = findViewById(R.id.recyclerViewProductos);
         fabResumen = findViewById(R.id.fabResumen);
@@ -71,6 +82,22 @@ public class MenuActivity extends AppCompatActivity implements ProductoOrdenAdap
         fabResumen.setOnClickListener(v -> mostrarDialogoConfirmacion());
         fabTapers.setOnClickListener(v -> mostrarDialogoTapers());
 
+        editTextSearch = findViewById(R.id.editTextSearch);
+        editTextSearch.addTextChangedListener(new android.text.TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                filtrarProductos(s.toString());
+            }
+
+            @Override
+            public void afterTextChanged(android.text.Editable s) {
+            }
+        });
+
         actualizarBotones();
     }
 
@@ -79,7 +106,8 @@ public class MenuActivity extends AppCompatActivity implements ProductoOrdenAdap
         productoRepository.getProductosLiveData().observe(this, new Observer<List<Producto>>() {
             @Override
             public void onChanged(List<Producto> productos) {
-                adapter.setProductos(productos);
+                listaCompletaProductos = new ArrayList<>(productos);
+                filtrarProductos(editTextSearch.getText().toString());
                 actualizarBotones();
             }
         });
@@ -90,6 +118,7 @@ public class MenuActivity extends AppCompatActivity implements ProductoOrdenAdap
 
     @Override
     public void onCantidadChanged(Producto producto) {
+        productoRepository.actualizarProductoCarrito(producto);
         actualizarBotones();
     }
 
@@ -99,7 +128,8 @@ public class MenuActivity extends AppCompatActivity implements ProductoOrdenAdap
     }
 
     private void actualizarBotones() {
-        int totalItems = adapter.getTotalItems() + cantidadTapers;
+        int cantidadTapers = productoRepository.getCantidadTapers();
+        int totalItems = productoRepository.getCantidadTotalItems() + cantidadTapers;
         fabTapers.setText("Tapers: " + cantidadTapers);
 
         if (totalItems > 0) {
@@ -119,21 +149,23 @@ public class MenuActivity extends AppCompatActivity implements ProductoOrdenAdap
         View buttonMenos = dialogView.findViewById(R.id.buttonMenosTaper);
         View buttonMas = dialogView.findViewById(R.id.buttonMasTaper);
 
-        textViewCantidad.setText(String.valueOf(cantidadTapers));
+        textViewCantidad.setText(String.valueOf(productoRepository.getCantidadTapers()));
         actualizarTotalTapers(textViewTotal);
 
         buttonMenos.setOnClickListener(v -> {
-            if (cantidadTapers > 0) {
-                cantidadTapers--;
-                textViewCantidad.setText(String.valueOf(cantidadTapers));
+            int current = productoRepository.getCantidadTapers();
+            if (current > 0) {
+                productoRepository.setCantidadTapers(current - 1);
+                textViewCantidad.setText(String.valueOf(productoRepository.getCantidadTapers()));
                 actualizarTotalTapers(textViewTotal);
                 actualizarBotones();
             }
         });
 
         buttonMas.setOnClickListener(v -> {
-            cantidadTapers++;
-            textViewCantidad.setText(String.valueOf(cantidadTapers));
+            int current = productoRepository.getCantidadTapers();
+            productoRepository.setCantidadTapers(current + 1);
+            textViewCantidad.setText(String.valueOf(productoRepository.getCantidadTapers()));
             actualizarTotalTapers(textViewTotal);
             actualizarBotones();
         });
@@ -147,13 +179,33 @@ public class MenuActivity extends AppCompatActivity implements ProductoOrdenAdap
                 .show();
     }
 
+    private void filtrarProductos(String query) {
+        if (listaCompletaProductos == null)
+            return;
+
+        if (query.isEmpty()) {
+            adapter.setProductos(listaCompletaProductos);
+        } else {
+            List<Producto> filtrados = new ArrayList<>();
+            String lowerQuery = query.toLowerCase();
+            for (Producto p : listaCompletaProductos) {
+                if (p.getNombre().toLowerCase().contains(lowerQuery)) {
+                    filtrados.add(p);
+                }
+            }
+            adapter.setProductos(filtrados);
+        }
+    }
+
     private void actualizarTotalTapers(TextView textView) {
-        double totalTapers = cantidadTapers * PRECIO_TAPER;
+        double totalTapers = productoRepository.getCantidadTapers() * PRECIO_TAPER;
         textView.setText(String.format(Locale.getDefault(), "Total: S/. %,.2f", totalTapers));
     }
 
     private void mostrarDialogoConfirmacion() {
-        List<Producto> productosSeleccionados = adapter.getProductosSeleccionados();
+        // USAR EL CARRITO GLOBAL EN LUGAR DEL ADAPTER
+        List<Producto> productosSeleccionados = productoRepository.getProductosCarrito();
+        int cantidadTapers = productoRepository.getCantidadTapers();
 
         if (productosSeleccionados.isEmpty() && cantidadTapers == 0) {
             Toast.makeText(this, "No hay productos seleccionados", Toast.LENGTH_SHORT).show();
@@ -334,19 +386,18 @@ public class MenuActivity extends AppCompatActivity implements ProductoOrdenAdap
         String notasCompletas = observaciones;
 
         if (tapers > 0) {
-            if (!notasCompletas.isEmpty()) {
-                notasCompletas += "\n";
-            }
-            notasCompletas += "Tapers: " + tapers + " (S/. " + (tapers * PRECIO_TAPER) + ")";
+            // Taper ID 6
+            productosApi.add(new ApiPedido.ProductoPedido(6, tapers));
         }
 
-        double totalConTapers = total + (tapers * PRECIO_TAPER);
+        // El total ya incluye los tapers porque viene calculado del resumen
+        double totalFinal = total;
 
         // Crear objeto API
         ApiPedido apiPedido = new ApiPedido(
                 ubicacion,
                 notasCompletas,
-                totalConTapers,
+                totalFinal,
                 productosApi);
 
         // Enviar a la API
@@ -437,10 +488,22 @@ public class MenuActivity extends AppCompatActivity implements ProductoOrdenAdap
     }
 
     private void limpiarTodo() {
+        // Limpiamos la lista local explícitamente para asegurar que el adapter se
+        // refresque
+        // incluso si las referencias se perdieran
+        if (listaCompletaProductos != null) {
+            for (Producto p : listaCompletaProductos) {
+                p.setCantidad(0);
+            }
+        }
+
         adapter.limpiarCantidades();
         productoRepository.resetCantidades();
-        cantidadTapers = 0;
+        // cantidadTapers = 0; // Ya se resetea en el repositorio
         actualizarBotones();
+
+        // Forzamos actualización visual final
+        adapter.notifyDataSetChanged();
     }
 
     @Override

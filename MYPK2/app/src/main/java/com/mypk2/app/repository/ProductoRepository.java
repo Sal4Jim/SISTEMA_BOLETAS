@@ -23,9 +23,10 @@ public class ProductoRepository {
     private List<Categoria> categorias = new ArrayList<>();
     private Map<Integer, Producto> productosMap = new HashMap<>();
     private Map<Integer, Categoria> categoriasMap = new HashMap<>();
-    private Map<Integer, Integer> cantidadesGuardadas = new HashMap<>(); // Persistencia global
+    private Map<Integer, Producto> carrito = new HashMap<>(); // Carrito global con objetos completos
     private MutableLiveData<List<Producto>> productosLiveData = new MutableLiveData<>();
     private MutableLiveData<List<Categoria>> categoriasLiveData = new MutableLiveData<>();
+    private int cantidadTapers = 0;
     private Context context;
 
     private ProductoRepository(Context context) {
@@ -70,20 +71,23 @@ public class ProductoRepository {
                 if (response.isSuccessful() && response.body() != null) {
                     ProductoResponse productoResponse = response.body();
                     if (productoResponse.isSuccess()) {
-                        // 1. Guardar cantidades actuales antes de limpiar
-                        for (Producto p : productos) {
-                            if (p.getCantidad() > 0) {
-                                cantidadesGuardadas.put(p.getId(), p.getCantidad());
-                            }
-                        }
-
+                        // Nota: No limpiamos 'carrito', solo la lista visible 'productos'
                         productos.clear();
                         productosMap.clear();
 
                         for (Producto producto : productoResponse.getProductos()) {
-                            // 2. Restaurar cantidades si existen en memoria
-                            if (cantidadesGuardadas.containsKey(producto.getId())) {
-                                producto.setCantidad(cantidadesGuardadas.get(producto.getId()));
+                            // Sincronizar con el carrito global
+                            if (carrito.containsKey(producto.getId())) {
+                                Producto enCarrito = carrito.get(producto.getId());
+                                producto.setCantidad(enCarrito.getCantidad());
+                                // Actualizamos la referencia en el carrito para tener los datos más recientes
+                                // (precio, etc)
+                                carrito.put(producto.getId(), producto);
+                            }
+
+                            // Excluir Taper (ID 6) de la lista principal ya que se maneja aparte
+                            if (producto.getId() == 6) {
+                                continue;
                             }
 
                             productos.add(producto);
@@ -121,12 +125,21 @@ public class ProductoRepository {
         cargarProductosDesdeAPI(categoriasFilter, false);
     }
 
+    // Método para mantener el carrito actualizado desde el Adapter
+    public void actualizarProductoCarrito(Producto producto) {
+        if (producto.getCantidad() > 0) {
+            carrito.put(producto.getId(), producto);
+        } else {
+            carrito.remove(producto.getId());
+        }
+    }
+
     // Método para actualizar estado activo real en API
-    public void actualizarActivo(String nombreProducto, boolean activo) {
+    public void actualizarActivo(int idProducto, boolean activo) {
         // Encontrar producto localmente primero
         Producto productoEncontrado = null;
         for (Producto p : productos) {
-            if (p.getNombre().equals(nombreProducto)) {
+            if (p.getId() == idProducto) {
                 productoEncontrado = p;
                 break;
             }
@@ -237,6 +250,18 @@ public class ProductoRepository {
         return activos;
     }
 
+    public List<Producto> getProductosCarrito() {
+        return new ArrayList<>(carrito.values());
+    }
+
+    public int getCantidadTotalItems() {
+        int total = 0;
+        for (Producto p : carrito.values()) {
+            total += p.getCantidad();
+        }
+        return total;
+    }
+
     public List<Categoria> getCategorias() {
         return new ArrayList<>(categorias);
     }
@@ -268,10 +293,19 @@ public class ProductoRepository {
     }
 
     public void resetCantidades() {
-        cantidadesGuardadas.clear(); // Limpiar persistencia
+        // Primero aseguramos que los objetos que están en el carrito queden en 0,
+        // esto es crucial si hay refererencias en otras activities.
+        for (Producto p : carrito.values()) {
+            p.setCantidad(0);
+        }
+        carrito.clear(); // Limpiar persistencia global
+        cantidadTapers = 0; // Resetear tapers
+
+        // También limpiamos la lista actual por seguridad
         for (Producto p : productos) {
             p.setCantidad(0);
         }
+        productosLiveData.postValue(new ArrayList<>(productos));
     }
 
     public int getTotalProductos() {
@@ -294,5 +328,13 @@ public class ProductoRepository {
                 count++;
         }
         return count;
+    }
+
+    public int getCantidadTapers() {
+        return cantidadTapers;
+    }
+
+    public void setCantidadTapers(int cantidadTapers) {
+        this.cantidadTapers = cantidadTapers;
     }
 }
