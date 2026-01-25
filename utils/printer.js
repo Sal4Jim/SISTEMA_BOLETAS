@@ -34,7 +34,7 @@ const imprimirTicket = (venta) => {
             console.log('------------------------------------------------\n');
 
             // --- IMPRESIÓN REAL (RED / WIFI) ---
-            const PRINTER_IP = '192.168.100.64';
+            const PRINTER_IP = '192.168.0.196';
             const PRINTER_PORT = 9100;
 
             const device = new Network(PRINTER_IP, PRINTER_PORT);
@@ -145,7 +145,7 @@ const imprimirTicket = (venta) => {
 const imprimirTicketComanda = (ticket) => {
     return new Promise((resolve, reject) => {
         try {
-            const PRINTER_IP = '192.168.100.64';
+            const PRINTER_IP = '192.168.0.196';
             const PRINTER_PORT = 9100;
 
             const device = new Network(PRINTER_IP, PRINTER_PORT);
@@ -225,7 +225,7 @@ const imprimirTicketComanda = (ticket) => {
 const imprimirReporteDiario = (data) => {
     return new Promise((resolve, reject) => {
         try {
-            const PRINTER_IP = '192.168.100.64';
+            const PRINTER_IP = '192.168.0.196';
             const PRINTER_PORT = 9100;
 
             const device = new Network(PRINTER_IP, PRINTER_PORT);
@@ -311,7 +311,7 @@ const imprimirNotaVenta = (venta) => {
             const idTicket = String(venta.id_ticket).padStart(8, '0');
 
             // --- IMPRESIÓN REAL (RED / WIFI) ---
-            const PRINTER_IP = '192.168.100.64';
+            const PRINTER_IP = '192.168.0.196';
             const PRINTER_PORT = 9100;
 
             const device = new Network(PRINTER_IP, PRINTER_PORT);
