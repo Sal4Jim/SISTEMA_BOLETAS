@@ -32,7 +32,7 @@ public class OrdenActivity extends AppCompatActivity implements ProductoOrdenAda
 
     private List<Producto> todosProductos;
     private List<Producto> productosFiltrados;
-    private int cantidadTapers = 0;
+    // private int cantidadTapers = 0; // REEMPLAZADO POR REPOSITORIO
     private final double PRECIO_TAPER = 1.0;
     private ProductoRepository productoRepository;
 
@@ -60,6 +60,16 @@ public class OrdenActivity extends AppCompatActivity implements ProductoOrdenAda
 
         // Configurar listeners
         configurarListeners();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (adapter != null) {
+            adapter.notifyDataSetChanged();
+        }
+        actualizarTextoBotonTapers();
+        actualizarResumenButton();
     }
 
     private void initViews() {
@@ -166,13 +176,14 @@ public class OrdenActivity extends AppCompatActivity implements ProductoOrdenAda
         View buttonMas = dialogView.findViewById(R.id.buttonMasTaper);
 
         // Actualizar vista inicial
-        textViewCantidad.setText(String.valueOf(cantidadTapers));
+        textViewCantidad.setText(String.valueOf(productoRepository.getCantidadTapers()));
         actualizarTotalTapers(textViewTotal);
 
         buttonMenos.setOnClickListener(v -> {
-            if (cantidadTapers > 0) {
-                cantidadTapers--;
-                textViewCantidad.setText(String.valueOf(cantidadTapers));
+            int current = productoRepository.getCantidadTapers();
+            if (current > 0) {
+                productoRepository.setCantidadTapers(current - 1);
+                textViewCantidad.setText(String.valueOf(productoRepository.getCantidadTapers()));
                 actualizarTotalTapers(textViewTotal);
                 actualizarTextoBotonTapers();
                 actualizarResumenButton();
@@ -180,8 +191,9 @@ public class OrdenActivity extends AppCompatActivity implements ProductoOrdenAda
         });
 
         buttonMas.setOnClickListener(v -> {
-            cantidadTapers++;
-            textViewCantidad.setText(String.valueOf(cantidadTapers));
+            int current = productoRepository.getCantidadTapers();
+            productoRepository.setCantidadTapers(current + 1);
+            textViewCantidad.setText(String.valueOf(productoRepository.getCantidadTapers()));
             actualizarTotalTapers(textViewTotal);
             actualizarTextoBotonTapers();
             actualizarResumenButton();
@@ -198,21 +210,25 @@ public class OrdenActivity extends AppCompatActivity implements ProductoOrdenAda
     }
 
     private void actualizarTotalTapers(TextView textView) {
-        double totalTapers = cantidadTapers * PRECIO_TAPER;
+        double totalTapers = productoRepository.getCantidadTapers() * PRECIO_TAPER;
         textView.setText(String.format(Locale.getDefault(), "Total: S/. %,.2f", totalTapers));
     }
 
     private void actualizarTextoBotonTapers() {
-        fabTapers.setText("Tapers: " + cantidadTapers);
+        fabTapers.setText("Tapers: " + productoRepository.getCantidadTapers());
     }
 
     private void actualizarResumenButton() {
         int totalItems = 0;
-        try {
-            totalItems = adapter.getTotalItems() + cantidadTapers;
-        } catch (Exception e) {
-            totalItems = cantidadTapers;
+        // Calcular items totales incluyendo ocultos/filtrados
+        if (todosProductos != null) {
+            for (Producto p : todosProductos) {
+                totalItems += p.getCantidad();
+            }
         }
+
+        // Sumar tapers
+        totalItems += productoRepository.getCantidadTapers();
 
         if (totalItems > 0) {
             fabResumen.setText("Ver Resumen (" + totalItems + ")");
@@ -224,28 +240,83 @@ public class OrdenActivity extends AppCompatActivity implements ProductoOrdenAda
     }
 
     private void mostrarResumen() {
-        List<Producto> seleccionados = adapter.getProductosSeleccionados();
-        if (seleccionados.isEmpty() && cantidadTapers == 0) {
+        // Obtener TODOS los productos con cantidad > 0
+        List<Producto> seleccionados = new ArrayList<>();
+        if (todosProductos != null) {
+            for (Producto p : todosProductos) {
+                if (p.getCantidad() > 0) {
+                    seleccionados.add(p);
+                }
+            }
+        }
+
+        if (seleccionados.isEmpty() && productoRepository.getCantidadTapers() == 0) {
             Toast.makeText(this, "No hay productos seleccionados", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // Crear mensaje del resumen
-        StringBuilder mensaje = new StringBuilder("RESUMEN DE PEDIDO\n\n");
-        double totalProductos = 0;
+        // Lógica para COMBO: Categoría 1 (Menu) + Categoría 4 (Entrada) = 12 soles
+        List<Producto> itemsMenu = new ArrayList<>();
+        List<Producto> itemsEntrada = new ArrayList<>();
+        List<Producto> itemsOtros = new ArrayList<>();
 
-        // Productos
+        // Desglosar productos por unidad para facilitar el emparejamiento
+        for (Producto p : seleccionados) {
+            for (int i = 0; i < p.getCantidad(); i++) {
+                if (p.getIdCategoria() == 1) { // Menu
+                    itemsMenu.add(p);
+                } else if (p.getIdCategoria() == 4) { // Entrada
+                    itemsEntrada.add(p);
+                } else {
+                    itemsOtros.add(p);
+                }
+            }
+        }
+
+        // Calcular pares
+        int numCombos = Math.min(itemsMenu.size(), itemsEntrada.size());
+        int itemsMenuSueltos = itemsMenu.size() - numCombos;
+        int itemsEntradaSueltos = itemsEntrada.size() - numCombos;
+
+        double totalCombos = numCombos * 12.00;
+        double totalMenuSueltos = 0;
+        double totalEntradaSueltos = 0;
+        double totalOtros = 0;
+
+        // Sumar menús sueltos (los que sobran)
+        // Nota: Si hubiera precios distintos, idealmente ordenaríamos por precio
+        // descendente antes
+        for (int i = numCombos; i < itemsMenu.size(); i++) {
+            totalMenuSueltos += itemsMenu.get(i).getPrecio();
+        }
+
+        // Sumar entradas sueltas
+        for (int i = numCombos; i < itemsEntrada.size(); i++) {
+            totalEntradaSueltos += itemsEntrada.get(i).getPrecio();
+        }
+
+        // Sumar otros
+        for (Producto p : itemsOtros) {
+            totalOtros += p.getPrecio();
+        }
+
+        int cantidadTapers = productoRepository.getCantidadTapers();
+        double totalTapersCalculado = cantidadTapers * PRECIO_TAPER;
+        double totalGeneral = totalCombos + totalMenuSueltos + totalEntradaSueltos + totalOtros + totalTapersCalculado;
+
+        // Construir mensaje
+        StringBuilder mensaje = new StringBuilder("RESUMEN DE PEDIDO\n\n");
+
+        // Listar productos (visualización normal agrupada)
         for (Producto p : seleccionados) {
             double subtotal = p.getCantidad() * p.getPrecio();
             mensaje.append("• ").append(p.getNombre())
                     .append(" x").append(p.getCantidad())
                     .append(" = S/. ").append(String.format(Locale.getDefault(), "%,.2f", subtotal))
                     .append("\n");
-            totalProductos += subtotal;
         }
 
         // Tapers
-        double totalTapersCalculado = cantidadTapers * PRECIO_TAPER;
         if (cantidadTapers > 0) {
             mensaje.append("\n• Tapers")
                     .append(" x").append(cantidadTapers)
@@ -253,10 +324,30 @@ public class OrdenActivity extends AppCompatActivity implements ProductoOrdenAda
                     .append("\n");
         }
 
-        double totalGeneral = totalProductos + totalTapersCalculado;
-
         mensaje.append("\n━━━━━━━━━━━━━━━━━━━━\n");
-        mensaje.append("TOTAL: S/. ").append(String.format(Locale.getDefault(), "%,.2f", totalGeneral));
+
+        // Mostrar detalle del ahorro si aplica
+        if (numCombos > 0) {
+            // Calcular cuánto costaría sin descuento para mostrar el ahorro
+            // (Opcional, pero ayuda a validar)
+            double precioMenusCombo = 0;
+            for (int i = 0; i < numCombos; i++)
+                precioMenusCombo += itemsMenu.get(i).getPrecio();
+
+            double precioEntradasCombo = 0;
+            for (int i = 0; i < numCombos; i++)
+                precioEntradasCombo += itemsEntrada.get(i).getPrecio();
+
+            double precioOriginalCombos = precioMenusCombo + precioEntradasCombo;
+            double ahorro = precioOriginalCombos - totalCombos;
+
+            mensaje.append("Combos aplicados: ").append(numCombos).append("\n");
+            mensaje.append("Ahorro por combos: -S/. ").append(String.format(Locale.getDefault(), "%,.2f", ahorro))
+                    .append("\n");
+            mensaje.append("────────────────────\n");
+        }
+
+        mensaje.append("TOTAL A PAGAR: S/. ").append(String.format(Locale.getDefault(), "%,.2f", totalGeneral));
 
         // Mostrar diálogo
         new MaterialAlertDialogBuilder(this)
@@ -264,13 +355,21 @@ public class OrdenActivity extends AppCompatActivity implements ProductoOrdenAda
                 .setMessage(mensaje.toString())
                 .setPositiveButton("Confirmar", (dialog, which) -> {
                     Toast.makeText(this, "Pedido confirmado exitosamente", Toast.LENGTH_SHORT).show();
-                    // Limpiar todo
-                    adapter.limpiarCantidades();
+
+                    // Limpiar todo (incluyendo ocultos)
+                    if (todosProductos != null) {
+                        for (Producto p : todosProductos) {
+                            p.setCantidad(0);
+                        }
+                    }
+
+                    // Actualizar repositorio y adaptador
                     productoRepository.resetCantidades();
-                    cantidadTapers = 0;
+                    adapter.notifyDataSetChanged();
+
+                    // cantidadTapers = 0; // Ya se resetea en el repositorio
                     actualizarTextoBotonTapers();
-                    fabResumen.setText("Ver Resumen");
-                    fabResumen.setVisibility(View.GONE);
+                    actualizarResumenButton();
                 })
                 .setNeutralButton("Seguir Editando", null)
                 .show();
@@ -278,11 +377,15 @@ public class OrdenActivity extends AppCompatActivity implements ProductoOrdenAda
 
     @Override
     public void onCantidadChanged(Producto producto) {
-        // Este método es necesario por la interfaz
+        // Actualizar repositorio para persistencia global
+        productoRepository.actualizarProductoCarrito(producto);
+        // Actualizar botón de resumen
+        actualizarResumenButton();
     }
 
     @Override
     public void onTotalItemsChanged(int totalItems) {
+        // Ignoramos el totalItems del adaptador porque solo cuenta visibles
         actualizarResumenButton();
     }
 
