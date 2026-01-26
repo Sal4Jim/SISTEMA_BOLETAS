@@ -1,8 +1,7 @@
 const net = require('net');
 
 // CONFIGURA AQUÍ LA IP QUE QUIERES PROBAR
-const HOST = '192.168.100.64';
-const HOST = '192.168.0.200';
+const HOST = '192.168.0.64';
 const PORT = 9100;
 
 console.log(`📡 Intentando conectar a la impresora en ${HOST}:${PORT}...`);
