@@ -3,6 +3,10 @@ const Network = require('escpos-network');
 const path = require('path');
 const fs = require('fs');
 
+// CONFIGURACIÓN CENTRALIZADA DE IMPRESORA
+const PRINTER_IP = '192.168.0.64'; // Cambia esto si la IP de la impresora cambia
+const PRINTER_PORT = 9100;
+
 // Función para imprimir el ticket
 const imprimirTicket = (venta) => {
     return new Promise((resolve, reject) => {
@@ -34,9 +38,6 @@ const imprimirTicket = (venta) => {
             console.log('------------------------------------------------\n');
 
             // --- IMPRESIÓN REAL (RED / WIFI) ---
-            const PRINTER_IP = '192.168.100.64';
-            const PRINTER_PORT = 9100;
-
             const device = new Network(PRINTER_IP, PRINTER_PORT);
             const options = { encoding: "cp850" };
             const printer = new escpos.Printer(device, options);
@@ -145,9 +146,6 @@ const imprimirTicket = (venta) => {
 const imprimirTicketComanda = (ticket) => {
     return new Promise((resolve, reject) => {
         try {
-            const PRINTER_IP = '192.168.100.64';
-            const PRINTER_PORT = 9100;
-
             const device = new Network(PRINTER_IP, PRINTER_PORT);
             const options = { encoding: "cp850" };
             const printer = new escpos.Printer(device, options);
@@ -225,9 +223,6 @@ const imprimirTicketComanda = (ticket) => {
 const imprimirReporteDiario = (data) => {
     return new Promise((resolve, reject) => {
         try {
-            const PRINTER_IP = '192.168.100.64';
-            const PRINTER_PORT = 9100;
-
             const device = new Network(PRINTER_IP, PRINTER_PORT);
             const options = { encoding: "cp850" };
             const printer = new escpos.Printer(device, options);
@@ -311,9 +306,6 @@ const imprimirNotaVenta = (venta) => {
             const idTicket = String(venta.id_ticket).padStart(8, '0');
 
             // --- IMPRESIÓN REAL (RED / WIFI) ---
-            const PRINTER_IP = '192.168.100.64';
-            const PRINTER_PORT = 9100;
-
             const device = new Network(PRINTER_IP, PRINTER_PORT);
             const options = { encoding: "cp850" };
             const printer = new escpos.Printer(device, options);
