@@ -48,7 +48,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         <td>${ticket.notas || '-'}</td>
                         <td>S/ ${Number(ticket.total_estimado || 0).toFixed(2)}</td>
                         <td>
-                            <button class="btn-editar btn-imprimir-nota" data-id="${ticket.id_ticket}" style="width: auto; padding: 5px 10px; font-size: 0.85rem;">🖨️ Imprimir</button>
+                            <button class="btn-editar btn-imprimir-nota" data-id="${ticket.id_ticket}" style="width: auto; padding: 5px 10px; font-size: 0.85rem;">🖨️ Nota de venta</button>
+                        </td>
+                        <td>
+                            <button class="btn-editar btn-reimprimir-comanda" data-id="${ticket.id_ticket}" style="width: auto; padding: 5px 10px; font-size: 0.85rem; background-color: #ff9800; color: white; border: none;">👨‍🍳 Cocina</button>
                         </td>
                     `;
                     tablaBody.appendChild(tr);
@@ -67,6 +70,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Eventos
     tablaBody.addEventListener('click', async (e) => {
+        // --- NUEVO: Botón Reimprimir Comanda (Cocina) ---
+        if (e.target.classList.contains('btn-reimprimir-comanda')) {
+            const idTicket = e.target.getAttribute('data-id');
+            const btn = e.target;
+
+            if (!confirm(`¿Reimprimir Comanda para Cocina (Ticket #${idTicket})?`)) return;
+
+            const originalText = btn.textContent;
+            btn.textContent = '...';
+            btn.disabled = true;
+
+            try {
+                const response = await fetch('/api/tickets/reprint-comanda', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id_ticket: idTicket })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert('✅ ' + result.message);
+                } else {
+                    alert('❌ Error: ' + (result.message || 'No se pudo imprimir'));
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('❌ Error de conexión al intentar reimprimir');
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+            return; // Detener propagación
+        }
+
         if (e.target.classList.contains('btn-imprimir-nota')) {
             const idTicket = e.target.getAttribute('data-id');
             const btn = e.target;

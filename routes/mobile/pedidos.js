@@ -170,7 +170,7 @@ router.post('/', async (req, res) => {
                 // B. Imprimir Boleta (si existe)
                 if (boletaParaImprimir) {
                     // Esperar 2 segundos para que la impresora libere el buffer
-                    await new Promise(r => setTimeout(r, 10000));
+                    await new Promise(r => setTimeout(r, 2000));
                     await imprimirTicket(boletaParaImprimir);
                 }
             } catch (err) {
