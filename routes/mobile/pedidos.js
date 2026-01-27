@@ -12,8 +12,6 @@ router.post('/', async (req, res) => {
 
         const { mesa, notas, total_estimado, productos } = req.body;
 
-        console.log('Datos recibidos:', { mesa, notas, total_estimado, productosLength: productos ? productos.length : 0 });
-
         // Validaciones básicas
         if (!mesa || total_estimado === undefined || !productos || !Array.isArray(productos)) {
             await connection.rollback();
@@ -93,7 +91,6 @@ router.post('/', async (req, res) => {
         );
 
         const id_ticket = ticketResult.insertId;
-        console.log('Ticket creado ID:', id_ticket);
 
         // 2. Insertar detalles del ticket
         for (const producto of productos) {
@@ -102,7 +99,6 @@ router.post('/', async (req, res) => {
                     'INSERT INTO detalle_ticket (id_ticket, id_producto, cantidad) VALUES (?, ?, ?)',
                     [id_ticket, producto.id_producto, producto.cantidad]
                 );
-                console.log(`Producto ${producto.id_producto} x${producto.cantidad} agregado`);
             }
         }
 
@@ -120,8 +116,6 @@ router.post('/', async (req, res) => {
                 correlativo = corrResult[0].max_correlativo + 1;
             }
 
-            console.log('Correlativo para boleta:', correlativo);
-
             // Insertar boleta
             // NOTA: Se usa id_pago = 1 (Efectivo) por defecto y id_cliente = 1 (Genérico) ya que la app móvil no los envía aún
             const [boletaResult] = await connection.execute(
@@ -132,7 +126,6 @@ router.post('/', async (req, res) => {
             );
 
             const id_boleta = boletaResult.insertId;
-            console.log('Boleta creada ID:', id_boleta);
 
             // Insertar detalles de boleta copiando del ticket
             await connection.execute(
@@ -143,8 +136,6 @@ router.post('/', async (req, res) => {
                  WHERE dt.id_ticket = ?`,
                 [id_boleta, id_ticket]
             );
-
-            console.log('Detalles de boleta insertados');
 
             // Preparar datos para imprimir boleta
             boletaParaImprimir = {
@@ -174,14 +165,12 @@ router.post('/', async (req, res) => {
                     id_ticket, mesa, fecha_emision: new Date(),
                     productos: productosEnriquecidos, notas, total_estimado: total
                 };
-                console.log('🖨️ Enviando comanda a cocina...');
                 await imprimirTicketComanda(ticketComanda);
 
                 // B. Imprimir Boleta (si existe)
                 if (boletaParaImprimir) {
                     // Esperar 2 segundos para que la impresora libere el buffer
-                    await new Promise(r => setTimeout(r, 2000));
-                    console.log('🖨️ Enviando boleta...');
+                    await new Promise(r => setTimeout(r, 10000));
                     await imprimirTicket(boletaParaImprimir);
                 }
             } catch (err) {

@@ -13,7 +13,7 @@ const imprimirTicket = (venta) => {
         try {
             // Datos de la empresa (Simulación para SUNAT)
             const empresa = {
-                ruc: '20999999991',
+                ruc: '10413819569',
                 razonSocial: 'PK2 - RESTAURANT',
                 direccion: 'Av. Independencia 685, Moche 13600'
             };

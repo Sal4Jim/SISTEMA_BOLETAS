@@ -416,19 +416,6 @@ public class MenuActivity extends AppCompatActivity implements ProductoOrdenAdap
                     ApiResponse apiResponse = response.body();
 
                     if (apiResponse.isSuccess()) {
-                        // Trigger de impresión (Fire & Forget)
-                        apiService.imprimirTicket(apiPedido).enqueue(new Callback<Void>() {
-                            @Override
-                            public void onResponse(Call<Void> call, Response<Void> response) {
-                                System.out.println("Solicitud de impresión enviada");
-                            }
-
-                            @Override
-                            public void onFailure(Call<Void> call, Throwable t) {
-                                System.err.println("Error al enviar impresión: " + t.getMessage());
-                            }
-                        });
-
                         runOnUiThread(() -> {
                             Toast.makeText(MenuActivity.this,
                                     "✓ Pedido #" + apiResponse.getIdPedido() + " confirmado",

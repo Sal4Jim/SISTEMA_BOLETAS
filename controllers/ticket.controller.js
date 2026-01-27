@@ -35,6 +35,8 @@ const createTicketAndPrint = async (req, res) => {
 
         // 4. Imprimir (No bloqueamos la respuesta si falla la impresión, pero avisamos)
         try {
+            // Esta línea permite imprimir si se crea el pedido desde Postman o una futura Web de Meseros.
+            // (Actualmente la App Móvil usa su propia ruta y el Panel Web no crea pedidos, por lo que esto no se ejecuta en el flujo diario)
             await imprimirTicketComanda(ticketParaImprimir);
             res.status(201).json({
                 message: 'Pedido registrado y enviado a cocina.',
@@ -106,4 +108,26 @@ const printNotaVenta = async (req, res) => {
     }
 };
 
-module.exports = { createTicketAndPrint, getTicketsByDate, printDailyReport, printNotaVenta };
+const reprintTicketComanda = async (req, res) => {
+    try {
+        const { id_ticket } = req.body;
+        if (!id_ticket) return res.status(400).json({ message: 'Se requiere id_ticket' });
+
+        // 1. Obtener ticket con productos desde la BD
+        const ticketFull = await Ticket.getByIdWithDetails(id_ticket);
+
+        if (!ticketFull) {
+            return res.status(404).json({ message: 'Ticket no encontrado' });
+        }
+
+        // 2. Imprimir Comanda nuevamente
+        await imprimirTicketComanda(ticketFull);
+        res.json({ message: 'Ticket de comanda reenviado a cocina correctamente' });
+
+    } catch (error) {
+        console.error("Error al reimprimir comanda:", error);
+        res.status(500).json({ message: 'Error al reimprimir comanda', error: error.message });
+    }
+};
+
+module.exports = { createTicketAndPrint, getTicketsByDate, printDailyReport, printNotaVenta, reprintTicketComanda };
