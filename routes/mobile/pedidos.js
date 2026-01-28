@@ -1,7 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const { pool } = require('../../config/database');
-const { imprimirTicketComanda, imprimirTicket } = require('../../utils/printer'); // Importar impresora
+const { imprimirTicketComanda, imprimirTicket } = require('../../utils/printer'); 
+
+// CONSTANTES 
+const ID_CAT_MENU = 1;
+const ID_CAT_ENTRADA = 4;
 
 // POST /api/mobile/pedidos - Crear pedido desde app móvil
 router.post('/', async (req, res) => {
@@ -64,7 +68,7 @@ router.post('/', async (req, res) => {
             if (ids.length > 0) {
                 // Usamos query en lugar de execute para soportar IN (?) con array
                 const [rows] = await connection.query(
-                    'SELECT id_producto, nombre, precio FROM producto WHERE id_producto IN (?)',
+                    'SELECT id_producto, nombre, precio, id_categoria FROM producto WHERE id_producto IN (?)',
                     [ids]
                 );
                 
@@ -73,10 +77,42 @@ router.post('/', async (req, res) => {
                     return {
                         ...p,
                         nombre: info ? info.nombre : `Producto ${p.id_producto}`,
+                        id_categoria: info ? info.id_categoria : null,
                         precio_unitario: info ? info.precio : 0,
                         subtotal: info ? (info.precio * p.cantidad) : 0
                     };
                 });
+
+                // --- APLICAR REGLA: MENU + ENTRADA = 12.00 ---
+                const totalMenus = productosEnriquecidos.reduce((sum, p) => p.id_categoria === ID_CAT_MENU ? sum + p.cantidad : sum, 0);
+                const totalEntradas = productosEnriquecidos.reduce((sum, p) => p.id_categoria === ID_CAT_ENTRADA ? sum + p.cantidad : sum, 0);
+                const pares = Math.min(totalMenus, totalEntradas);
+
+                if (pares > 0) {
+                    let menusPaired = 0;
+                    let entradasPaired = 0;
+                    productosEnriquecidos.forEach(p => {
+                        if (p.id_categoria === ID_CAT_MENU) {
+                            const cant = p.cantidad;
+                            const emparejados = Math.min(cant, Math.max(0, pares - menusPaired));
+                            if (emparejados > 0) {
+                                const precioBase = Number(p.precio_unitario);
+                                p.precio_unitario = ((emparejados * 12.00) + ((cant - emparejados) * precioBase)) / cant;
+                                menusPaired += emparejados;
+                            }
+                        } else if (p.id_categoria === ID_CAT_ENTRADA) {
+                            const cant = p.cantidad;
+                            const emparejados = Math.min(cant, Math.max(0, pares - entradasPaired));
+                            if (emparejados > 0) {
+                                const precioBase = Number(p.precio_unitario);
+                                p.precio_unitario = ((emparejados * 0.00) + ((cant - emparejados) * precioBase)) / cant;
+                                entradasPaired += emparejados;
+                            }
+                        }
+                        p.subtotal = p.cantidad * p.precio_unitario;
+                    });
+                }
+                // ---------------------------------------------
             }
         } catch (err) {
             console.error('Error obteniendo detalles productos:', err);
@@ -94,10 +130,14 @@ router.post('/', async (req, res) => {
 
         // 2. Insertar detalles del ticket
         for (const producto of productos) {
+            // Buscamos el precio que obtuvimos en la consulta anterior (productosEnriquecidos o rows)
+            const info = productosEnriquecidos.find(p => p.id_producto == producto.id_producto);
+            const precioFijo = info ? Number(info.precio_unitario) : 0;
+
             if (producto.cantidad > 0) {
                 await connection.execute(
-                    'INSERT INTO detalle_ticket (id_ticket, id_producto, cantidad) VALUES (?, ?, ?)',
-                    [id_ticket, producto.id_producto, producto.cantidad]
+                    'INSERT INTO detalle_ticket (id_ticket, id_producto, cantidad, precio_unitario) VALUES (?, ?, ?, ?)',
+                    [id_ticket, producto.id_producto, producto.cantidad, precioFijo]
                 );
             }
         }

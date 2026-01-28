@@ -2,6 +2,54 @@ const Ticket = require('../models/ticket.model');
 const Product = require('../models/product.model');
 const { imprimirTicketComanda, imprimirReporteDiario, imprimirNotaVenta } = require('../utils/printer');
 
+// --- CONFIGURACIÓN DE REGLAS DE NEGOCIO ---
+const ID_CAT_MENU = 1;  
+const ID_CAT_ENTRADA = 4; 
+
+// Helper para aplicar la regla: Menu + Entrada = 12.00
+const aplicarReglaMenu = (productos) => {
+    // 1. Contar totales por categoría
+    const totalMenus = productos.reduce((sum, p) => p.id_categoria === ID_CAT_MENU ? sum + p.cantidad : sum, 0);
+    const totalEntradas = productos.reduce((sum, p) => p.id_categoria === ID_CAT_ENTRADA ? sum + p.cantidad : sum, 0);
+    
+    // 2. Calcular pares posibles
+    const pares = Math.min(totalMenus, totalEntradas);
+    
+    if (pares > 0) {
+        let menusPaired = 0;
+        let entradasPaired = 0;
+
+        productos.forEach(p => {
+            if (p.id_categoria === ID_CAT_MENU) {
+                const cant = p.cantidad;
+                const porEmparejar = Math.max(0, pares - menusPaired);
+                const emparejados = Math.min(cant, porEmparejar);
+                
+                if (emparejados > 0) {
+                    // Precio ponderado: (Emparejados * 12.00 + Resto * PrecioOriginal) / Total
+                    const precioOriginal = Number(p.precio_unitario);
+                    const nuevoPrecio = ((emparejados * 12.00) + ((cant - emparejados) * precioOriginal)) / cant;
+                    p.precio_unitario = nuevoPrecio;
+                    menusPaired += emparejados;
+                }
+            } else if (p.id_categoria === ID_CAT_ENTRADA) {
+                const cant = p.cantidad;
+                const porEmparejar = Math.max(0, pares - entradasPaired);
+                const emparejados = Math.min(cant, porEmparejar);
+                
+                if (emparejados > 0) {
+                    // Precio ponderado: (Emparejados * 0.00 + Resto * PrecioOriginal) / Total
+                    const precioOriginal = Number(p.precio_unitario);
+                    const nuevoPrecio = ((emparejados * 0.00) + ((cant - emparejados) * precioOriginal)) / cant;
+                    p.precio_unitario = nuevoPrecio;
+                    entradasPaired += emparejados;
+                }
+            }
+        });
+    }
+    return productos;
+};
+
 const createTicketAndPrint = async (req, res) => {
     const ticketData = req.body;
 
@@ -11,29 +59,44 @@ const createTicketAndPrint = async (req, res) => {
             return res.status(400).json({ message: 'Faltan datos: mesa o productos.' });
         }
 
-        // 2. Guardar en BD
-        const nuevoTicket = await Ticket.create(ticketData);
+        // VALIDACIÓN: Verificar precios negativos
+        const productoNegativo = ticketData.productos.find(p => p.precio_unitario !== undefined && Number(p.precio_unitario) < 0);
+        if (productoNegativo) {
+            return res.status(400).json({ 
+                message: `El precio no puede ser negativo. Producto: ${productoNegativo.nombre || 'ID ' + productoNegativo.id_producto}` 
+            });
+        }
 
-        // 3. Enriquecer datos para la impresión (Nombres de productos)
+        // 2. Enriquecer datos ANTES de guardar (Nombres y Precios)
         // Esto permite que funcione tanto si envían nombres (Web) como si solo envían IDs (App Móvil)
         const productosConNombres = await Promise.all(ticketData.productos.map(async (item) => {
-            // Si ya viene el nombre, lo usamos
-            if (item.nombre) return item;
+            // Si ya viene el nombre y precio, lo usamos
+            if (item.nombre && item.precio_unitario !== undefined) return item;
 
             // Si no, lo buscamos en la BD
             const productoBD = await Product.findById(item.id_producto);
             return {
                 ...item,
-                nombre: productoBD ? productoBD.nombre : 'Producto Desconocido'
+                id_categoria: productoBD ? productoBD.id_categoria : null, // Necesario para la regla
+                nombre: item.nombre || (productoBD ? productoBD.nombre : 'Producto Desconocido'),
+                precio_unitario: item.precio_unitario !== undefined ? item.precio_unitario : (productoBD ? productoBD.precio : 0)
             };
         }));
 
+        // 3. Aplicar Regla de Negocio (Menu + Entrada = 12)
+        const productosProcesados = aplicarReglaMenu(productosConNombres);
+        const nuevoTotalEstimado = productosProcesados.reduce((sum, p) => sum + (p.cantidad * p.precio_unitario), 0);
+
+        // 4. Guardar en BD
+        const ticketParaGuardar = { ...ticketData, productos: productosProcesados, total_estimado: nuevoTotalEstimado };
+        const nuevoTicket = await Ticket.create(ticketParaGuardar);
+
         const ticketParaImprimir = {
             ...nuevoTicket,
-            productos: productosConNombres
+            productos: productosProcesados
         };
 
-        // 4. Imprimir (No bloqueamos la respuesta si falla la impresión, pero avisamos)
+        // 5. Imprimir
         try {
             // Esta línea permite imprimir si se crea el pedido desde Postman o una futura Web de Meseros.
             // (Actualmente la App Móvil usa su propia ruta y el Panel Web no crea pedidos, por lo que esto no se ejecuta en el flujo diario)
@@ -130,4 +193,69 @@ const reprintTicketComanda = async (req, res) => {
     }
 };
 
-module.exports = { createTicketAndPrint, getTicketsByDate, printDailyReport, printNotaVenta, reprintTicketComanda };
+const getTicketById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const ticket = await Ticket.getByIdWithDetails(id);
+        if (!ticket) return res.status(404).json({ message: 'Ticket no encontrado' });
+        res.json(ticket);
+    } catch (error) {
+        res.status(500).json({ message: 'Error al obtener ticket', error: error.message });
+    }
+};
+
+const updateTicket = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const ticketData = req.body; // { mesa, notas, productos, total_estimado }
+        
+        // VALIDACIÓN: Verificar precios negativos
+        if (ticketData.productos && Array.isArray(ticketData.productos)) {
+            const productoNegativo = ticketData.productos.find(p => p.precio_unitario !== undefined && Number(p.precio_unitario) < 0);
+            if (productoNegativo) {
+                return res.status(400).json({ 
+                    message: `El precio no puede ser negativo. Producto: ${productoNegativo.nombre || 'ID ' + productoNegativo.id_producto}` 
+                });
+            }
+        }
+
+        // --- LÓGICA DE REGLA DE NEGOCIO PARA UPDATE ---
+        // Necesitamos enriquecer los productos con su categoría para aplicar la regla
+        const productosEnriquecidos = await Promise.all(ticketData.productos.map(async (item) => {
+            const productoBD = await Product.findById(item.id_producto);
+            return {
+                ...item,
+                id_categoria: productoBD ? productoBD.id_categoria : null
+            };
+        }));
+
+        const productosProcesados = aplicarReglaMenu(productosEnriquecidos);
+        const nuevoTotal = productosProcesados.reduce((sum, p) => sum + (p.cantidad * p.precio_unitario), 0);
+
+        // Guardar con precios ajustados
+        await Ticket.update(id, { ...ticketData, productos: productosProcesados, total_estimado: nuevoTotal });
+
+        // --- NUEVO: Reimprimir para cocina ---
+        const ticketActualizado = await Ticket.getByIdWithDetails(id);
+        if (ticketActualizado) {
+             // Agregamos una nota automática de "MODIFICADO"
+             const ticketParaImprimir = {
+                 ...ticketActualizado,
+                 notas: `*** MODIFICADO ***\n${ticketActualizado.notas || ''}`
+             };
+             
+             try {
+                await imprimirTicketComanda(ticketParaImprimir);
+             } catch(e) {
+                 console.error("Error al imprimir ticket modificado:", e);
+             }
+        }
+
+        res.json({ message: 'Ticket actualizado y reimpreso correctamente' });
+    } catch (error) {
+        console.error("Error en updateTicket:", error);
+        res.status(500).json({ message: 'Error al actualizar ticket', error: error.message });
+    }
+};
+
+module.exports = { createTicketAndPrint, getTicketsByDate, printDailyReport, printNotaVenta, reprintTicketComanda, getTicketById, updateTicket };

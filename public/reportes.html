@@ -6,40 +6,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reporte Diario - PK2</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/reportes.css">
 </head>
 
 <body>
     <div id="headerDinamico"></div>
 
     <main class="dashboard-container">
-        <div class="header-actions"
-            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
+        <div class="header-actions">
             <div>
-                <h1 style="color: var(--primary); margin: 0;">Reporte de Tickets</h1>
-                <p id="reloj-tiempo-real" style="color: var(--text-muted); margin: 5px 0 0 0; font-weight: 500;"></p>
+                <h1>Reporte de Tickets</h1>
+                <p id="reloj-tiempo-real"></p>
             </div>
 
-            <div style="display: flex; gap: 10px; align-items: center;">
-                <label for="fecha-reporte" style="font-weight: 600;">Fecha:</label>
-                <input type="date" id="fecha-reporte"
-                    style="padding: 8px; border: 1px solid var(--border-color); border-radius: 5px;">
-                <button class="btn-agregar" id="btn-imprimir-reporte"
-                    style="width: auto; padding: 8px 20px; background-color: var(--secondary);">🖨️ Imprimir
+            <div class="filter-group">
+                <label for="fecha-reporte">Fecha:</label>
+                <input type="date" id="fecha-reporte">
+                <button class="btn-agregar" id="btn-imprimir-reporte">🖨️ Imprimir
                     Reporte</button>
             </div>
         </div>
 
         <!-- Tarjetas de Resumen -->
-        <div class="cards-grid" style="grid-template-columns: repeat(2, 1fr); margin-bottom: 30px; gap: 20px;">
-            <div class="card" style="padding: 20px;">
-                <h3 style="margin: 0; font-size: 1rem;">Total Tickets</h3>
-                <p id="total-tickets-count"
-                    style="font-size: 2rem; font-weight: bold; color: var(--primary); margin: 10px 0;">0</p>
+        <div class="cards-grid summary-grid">
+            <div class="card summary-card">
+                <h3>Total Tickets</h3>
+                <p id="total-tickets-count" class="card-value primary">0</p>
             </div>
-            <div class="card" style="padding: 20px;">
-                <h3 style="margin: 0; font-size: 1rem;">Total Estimado</h3>
-                <p id="total-estimado-sum"
-                    style="font-size: 2rem; font-weight: bold; color: var(--success); margin: 10px 0;">S/ 0.00</p>
+            <div class="card summary-card">
+                <h3>Total Estimado</h3>
+                <p id="total-estimado-sum" class="card-value success">S/ 0.00</p>
             </div>
         </div>
 
@@ -54,12 +50,45 @@
                         <th>Total Est.</th>
                         <th>Nota de Venta</th>
                         <th>Reimprimir</th>
+                        <th>Modificar</th>
                     </tr>
                 </thead>
                 <tbody id="tabla-reportes-body"></tbody>
             </table>
         </div>
     </main>
+
+    <!-- Modal para Editar Ticket -->
+    <div id="modalEditarTicket" class="modal">
+        <div class="modal-content">
+            <span class="close-modal-edit">&times;</span>
+            <h2 id="modalTitleEdit">Editar Ticket</h2>
+            <form id="formEditarTicket">
+                <input type="hidden" id="editTicketId">
+                <div class="form-group">
+                    <label for="editMesa">Mesa:</label>
+                    <input type="text" id="editMesa" required>
+                </div>
+                <div class="form-group">
+                    <label for="editNotas">Notas:</label>
+                    <textarea id="editNotas" rows="3"></textarea>
+                </div>
+                
+                <div class="modal-products-container">
+                    <label>Productos:</label>
+                    <div class="add-product-row">
+                        <select id="select-add-product" style="flex: 1; padding: 5px;"></select>
+                        <button type="button" id="btn-add-prod-modal" style="background-color: #4CAF50; color: white; border: none; padding: 5px 10px; cursor: pointer;">+</button>
+                    </div>
+                    <ul id="list-products-edit" class="product-list-edit">
+                        <!-- Lista dinámica -->
+                    </ul>
+                </div>
+
+                <button type="submit" class="btn-guardar">Guardar Cambios</button>
+            </form>
+        </div>
+    </div>
 
     <div id="footerDinamico"></div>
     <script src="js/index.js"></script>

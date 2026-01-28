@@ -6,6 +6,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const totalEstimadoEl = document.getElementById('total-estimado-sum');
     const btnImprimir = document.getElementById('btn-imprimir-reporte');
 
+    // --- Elementos del Modal ---
+    const modalEditar = document.getElementById('modalEditarTicket');
+    const spanClose = document.querySelector('.close-modal-edit');
+    const formEditar = document.getElementById('formEditarTicket');
+    const inputId = document.getElementById('editTicketId');
+    const inputMesa = document.getElementById('editMesa');
+    const inputNotas = document.getElementById('editNotas');
+    const modalTitle = document.getElementById('modalTitleEdit');
+    
+    // Elementos nuevos para productos
+    const selectAddProduct = document.getElementById('select-add-product');
+    const btnAddProduct = document.getElementById('btn-add-prod-modal');
+    const listProductsEdit = document.getElementById('list-products-edit');
+    let currentEditingProducts = []; // Array para manejar los productos en memoria
+    let catalogoProductos = []; // Catálogo completo
+
     // 1. Configurar fecha actual por defecto
     const hoy = new Date().toISOString().split('T')[0];
     fechaInput.value = hoy;
@@ -48,10 +64,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         <td>${ticket.notas || '-'}</td>
                         <td>S/ ${Number(ticket.total_estimado || 0).toFixed(2)}</td>
                         <td>
-                            <button class="btn-editar btn-imprimir-nota" data-id="${ticket.id_ticket}" style="width: auto; padding: 5px 10px; font-size: 0.85rem;">🖨️ Nota de venta</button>
+                            <button class="btn-editar btn-imprimir-nota btn-table" data-id="${ticket.id_ticket}">🖨️ Nota de venta</button>
                         </td>
                         <td>
-                            <button class="btn-editar btn-reimprimir-comanda" data-id="${ticket.id_ticket}" style="width: auto; padding: 5px 10px; font-size: 0.85rem; background-color: #ff9800; color: white; border: none;">👨‍🍳 Cocina</button>
+                            <button class="btn-editar btn-reimprimir-comanda btn-table btn-kitchen" data-id="${ticket.id_ticket}">👨‍🍳 Cocina</button>
+                        </td>
+                        <td>
+                            <button class="btn-editar btn-modificar-ticket btn-table btn-edit-blue" data-id="${ticket.id_ticket}">✏️ Editar</button>
                         </td>
                     `;
                     tablaBody.appendChild(tr);
@@ -68,8 +87,159 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    // 4. Cargar Catálogo de Productos (para el select del modal)
+    const cargarCatalogo = async () => {
+        try {
+            const res = await fetch('/api/productos');
+            catalogoProductos = await res.json();
+            
+            selectAddProduct.innerHTML = '<option value="">Seleccionar producto...</option>';
+            catalogoProductos.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.id_producto;
+                opt.textContent = `${p.nombre} - S/ ${p.precio}`;
+                opt.dataset.precio = p.precio;
+                opt.dataset.nombre = p.nombre;
+                selectAddProduct.appendChild(opt);
+            });
+        } catch (error) {
+            console.error('Error cargando catálogo:', error);
+        }
+    };
+    cargarCatalogo();
+
+    // Renderizar lista de productos en el modal
+    const renderModalProducts = () => {
+        listProductsEdit.innerHTML = '';
+        currentEditingProducts.forEach((prod, index) => {
+            const li = document.createElement('li');
+            li.className = 'product-item-edit';
+            li.innerHTML = `
+                <span>${prod.nombre}</span>
+                <div style="display:flex; align-items:center; gap:5px; flex-wrap:wrap; justify-content:flex-end;">
+                    <input type="number" step="0.01" value="${Number(prod.precio_unitario).toFixed(2)}" class="price-input" data-index="${index}" style="width:70px; padding:2px;" placeholder="S/">
+                    <input type="number" min="1" value="${prod.cantidad}" class="qty-input" data-index="${index}" style="width:50px; padding:2px;">
+                    <button type="button" class="btn-remove-prod" data-index="${index}">X</button>
+                </div>
+            `;
+            listProductsEdit.appendChild(li);
+        });
+
+        // Listeners para cambios
+        document.querySelectorAll('.qty-input').forEach(input => {
+            input.onchange = (e) => {
+                const idx = e.target.dataset.index;
+                const val = parseInt(e.target.value);
+                if (val > 0) currentEditingProducts[idx].cantidad = val;
+                else e.target.value = 1;
+            };
+        });
+
+        document.querySelectorAll('.price-input').forEach(input => {
+            input.onchange = (e) => {
+                const idx = e.target.dataset.index;
+                const val = parseFloat(e.target.value);
+                if (!isNaN(val) && val >= 0) currentEditingProducts[idx].precio_unitario = val;
+            };
+        });
+
+        document.querySelectorAll('.btn-remove-prod').forEach(btn => {
+            btn.onclick = (e) => {
+                const idx = e.target.dataset.index;
+                currentEditingProducts.splice(idx, 1);
+                renderModalProducts();
+            };
+        });
+    };
+
+    // --- Lógica del Modal ---
+    // Cerrar modal
+    spanClose.onclick = () => modalEditar.style.display = "none";
+    window.onclick = (event) => { if (event.target == modalEditar) modalEditar.style.display = "none"; };
+
+    // Guardar cambios
+    formEditar.onsubmit = async (e) => {
+        e.preventDefault();
+        const id = inputId.value;
+        const mesa = inputMesa.value;
+        const notas = inputNotas.value;
+        
+        // Calcular nuevo total estimado
+        let nuevoTotal = 0;
+        currentEditingProducts.forEach(p => {
+            // Usamos el precio_unitario que tiene el objeto (ya sea el original o el editado)
+            const precio = Number(p.precio_unitario || 0);
+            nuevoTotal += precio * p.cantidad;
+        });
+
+        try {
+            const res = await fetch(`/api/tickets/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mesa, notas, productos: currentEditingProducts, total_estimado: nuevoTotal })
+            });
+
+            if (res.ok) {
+                alert('Ticket actualizado correctamente');
+                modalEditar.style.display = "none";
+                cargarReporte(); // Recargar tabla para ver cambios
+            } else {
+                const data = await res.json();
+                alert('Error: ' + (data.message || 'No se pudo actualizar'));
+            }
+        } catch (error) {
+            console.error(error);
+            alert('Error de conexión al actualizar');
+        }
+    };
+
+    // Agregar producto desde el select
+    btnAddProduct.onclick = () => {
+        const idProd = selectAddProduct.value;
+        if (!idProd) return;
+        
+        const opt = selectAddProduct.options[selectAddProduct.selectedIndex];
+        
+        // Verificar si ya existe para sumar cantidad
+        const existente = currentEditingProducts.find(p => p.id_producto == idProd);
+        if (existente) {
+            existente.cantidad++;
+        } else {
+            currentEditingProducts.push({
+                id_producto: idProd,
+                nombre: opt.dataset.nombre,
+                precio_unitario: Number(opt.dataset.precio),
+                cantidad: 1
+            });
+        }
+        renderModalProducts();
+    };
+
     // Eventos
     tablaBody.addEventListener('click', async (e) => {
+        // --- NUEVO: Botón Modificar Ticket ---
+        if (e.target.classList.contains('btn-modificar-ticket')) {
+            const idTicket = e.target.getAttribute('data-id');
+            
+            try {
+                // Obtener detalles completos del servidor
+                const res = await fetch(`/api/tickets/${idTicket}`);
+                const ticket = await res.json();
+
+                inputId.value = ticket.id_ticket;
+                inputMesa.value = ticket.mesa;
+                inputNotas.value = ticket.notas || '';
+                currentEditingProducts = ticket.productos || []; // Cargar productos
+                renderModalProducts();
+                modalTitle.textContent = `Editar Ticket #${idTicket}`;
+                modalEditar.style.display = "block";
+            } catch (err) {
+                console.error(err);
+                alert('Error al cargar detalles del ticket');
+            }
+            return;
+        }
+
         // --- NUEVO: Botón Reimprimir Comanda (Cocina) ---
         if (e.target.classList.contains('btn-reimprimir-comanda')) {
             const idTicket = e.target.getAttribute('data-id');
