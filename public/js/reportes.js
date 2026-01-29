@@ -23,13 +23,14 @@ document.addEventListener('DOMContentLoaded', () => {
     let catalogoProductos = []; // Catálogo completo
 
     // 1. Configurar fecha actual por defecto
-    const hoy = new Date().toISOString().split('T')[0];
-    fechaInput.value = hoy;
+    const fechaPeru = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Lima' });
+    fechaInput.value = fechaPeru;
 
     // 2. Reloj en tiempo real
     const actualizarReloj = () => {
         const ahora = new Date();
         relojEl.textContent = ahora.toLocaleString('es-PE', {
+            timeZone: 'America/Lima',
             weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
             hour: '2-digit', minute: '2-digit', second: '2-digit'
         });
