@@ -76,6 +76,22 @@ nav .nav-link.active {
     background-color: rgba(255, 255, 255, 0.1);
 }
 
+/* Logo animado */
+.nav-logo {
+    height: 45px; 
+    width: 45px; 
+    object-fit: contain; 
+    background-color: white;
+    border-radius: 50%; 
+    border: 2px solid var(--secondary); 
+    animation: floatLogo 2s ease-in-out infinite alternate;
+}
+
+@keyframes floatLogo {
+    from { transform: translateY(0); }
+    to { transform: translateY(-5px); }
+}
+
 /* --- DASHBOARD (INDEX) --- */
 .dashboard-container {
     max-width: 1200px;
