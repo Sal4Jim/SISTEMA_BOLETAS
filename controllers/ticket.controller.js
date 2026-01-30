@@ -223,9 +223,17 @@ const updateTicket = async (req, res) => {
         // Necesitamos enriquecer los productos con su categoría para aplicar la regla
         const productosEnriquecidos = await Promise.all(ticketData.productos.map(async (item) => {
             const productoBD = await Product.findById(item.id_producto);
+            
+            // FIX: Resetear precio a valor de catálogo para Menu y Entrada para recalcular combo correctamente
+            let precioParaCalculo = item.precio_unitario;
+            if (productoBD && (productoBD.id_categoria === ID_CAT_MENU || productoBD.id_categoria === ID_CAT_ENTRADA)) {
+                precioParaCalculo = Number(productoBD.precio);
+            }
+
             return {
                 ...item,
-                id_categoria: productoBD ? productoBD.id_categoria : null
+                id_categoria: productoBD ? productoBD.id_categoria : null,
+                precio_unitario: precioParaCalculo
             };
         }));
 

@@ -131,7 +131,7 @@ const Ticket = {
 
             // 2. Obtener detalles (productos)
             const [detalles] = await connection.query(`
-                SELECT dt.cantidad, p.nombre, COALESCE(dt.precio_unitario, p.precio) as precio_real, p.id_producto
+                SELECT dt.cantidad, p.nombre, COALESCE(dt.precio_unitario, p.precio) as precio_real, p.id_producto, p.id_categoria
                 FROM detalle_ticket dt
                 JOIN producto p ON dt.id_producto = p.id_producto
                 WHERE dt.id_ticket = ?
@@ -144,7 +144,8 @@ const Ticket = {
                 nombre: d.nombre,
                 cantidad: d.cantidad,
                 precio_unitario: d.precio_real,
-                subtotal: d.cantidad * d.precio_real
+                subtotal: d.cantidad * d.precio_real,
+                id_categoria: d.id_categoria
             }));
 
             // Si el ticket no tiene total_venta (porque es un ticket de comanda convertido),

@@ -28,7 +28,7 @@ client.on('error', (err) => {
     
     if (err.code === 'ETIMEDOUT') {
         console.log('⚠️ CAUSA: El servidor no recibe respuesta.');
-        console.log('   1. Verifica que tu PC tenga una IP en el rango');
+        console.log('   1. Verifica que tu PC tenga una IP en el rango 192.168.100.x');
         console.log('   2. Verifica que el cable de red de la impresora esté bien conectado.');
     } else if (err.code === 'EHOSTUNREACH') {
         console.log('⚠️ CAUSA: Tu PC no sabe cómo llegar a esa red (Rutas/Gateway incorrectos).');

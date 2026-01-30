@@ -7,6 +7,19 @@ const fs = require('fs');
 const PRINTER_IP = '192.168.0.64'; // Cambia esto si la IP de la impresora cambia
 const PRINTER_PORT = 9100;
 
+// Helper para ordenar productos por categoría para impresión
+const sortProductsByCategory = (products) => {
+    if (!products) return [];
+    // Orden: 1.Entrada(4), 2.Menú(1), 3.Carta(2), 4.Bebidas(3), 5.Otro(5)
+    const order = { 4: 1, 1: 2, 2: 3, 3: 4, 5: 5 };
+    
+    return [...products].sort((a, b) => {
+        const orderA = order[a.id_categoria] || 999;
+        const orderB = order[b.id_categoria] || 999;
+        return orderA - orderB;
+    });
+};
+
 // Función para imprimir el ticket
 const imprimirTicket = (venta) => {
     return new Promise((resolve, reject) => {
@@ -69,7 +82,8 @@ const imprimirTicket = (venta) => {
 
                 // Detalles de productos
                 if (venta.productos && venta.productos.length > 0) {
-                    venta.productos.forEach(prod => {
+                    const productosOrdenados = sortProductsByCategory(venta.productos);
+                    productosOrdenados.forEach(prod => {
                         const nombreProducto = prod.nombre || `Producto #${prod.id_producto}`;
                         const precio = Number(prod.precio_unitario).toFixed(2);
                         const subtotal = Number(prod.subtotal).toFixed(2);
@@ -174,7 +188,8 @@ const imprimirTicketComanda = (ticket) => {
 
                 // Listar productos
                 if (ticket.productos && ticket.productos.length > 0) {
-                    ticket.productos.forEach(prod => {
+                    const productosOrdenados = sortProductsByCategory(ticket.productos);
+                    productosOrdenados.forEach(prod => {
                         const cantidad = String(prod.cantidad);
                         // Intentamos usar el nombre que viene del JSON, si no, un genérico
                         const nombre = prod.nombre || `Prod ID:${prod.id_producto}`;
@@ -334,7 +349,8 @@ const imprimirNotaVenta = (venta) => {
 
                 // Productos
                 if (venta.productos && venta.productos.length > 0) {
-                    venta.productos.forEach(prod => {
+                    const productosOrdenados = sortProductsByCategory(venta.productos);
+                    productosOrdenados.forEach(prod => {
                         const nombreProducto = prod.nombre || `Producto ${prod.id_producto}`;
                         const precio = Number(prod.precio_unitario).toFixed(2);
                         const subtotal = Number(prod.subtotal).toFixed(2);

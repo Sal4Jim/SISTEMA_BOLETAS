@@ -76,10 +76,8 @@
                 
                 <div class="modal-products-container">
                     <label>Productos:</label>
-                    <div class="add-product-row">
-                        <select id="select-add-product" style="flex: 1; padding: 5px;"></select>
-                        <button type="button" id="btn-add-prod-modal" style="background-color: #4CAF50; color: white; border: none; padding: 5px 10px; cursor: pointer;">+</button>
-                    </div>
+                    <input type="text" id="filter-product-modal" placeholder="Buscar producto..." style="width: 100%; padding: 8px; margin-bottom: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+                    <div id="catalog-list" class="catalog-list"></div>
                     <ul id="list-products-edit" class="product-list-edit">
                         <!-- Lista dinámica -->
                     </ul>

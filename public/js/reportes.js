@@ -16,9 +16,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalTitle = document.getElementById('modalTitleEdit');
     
     // Elementos nuevos para productos
-    const selectAddProduct = document.getElementById('select-add-product');
-    const btnAddProduct = document.getElementById('btn-add-prod-modal');
+    const catalogListEl = document.getElementById('catalog-list');
     const listProductsEdit = document.getElementById('list-products-edit');
+    const filterProductInput = document.getElementById('filter-product-modal');
     let currentEditingProducts = []; // Array para manejar los productos en memoria
     let catalogoProductos = []; // Catálogo completo
 
@@ -88,37 +88,94 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    // Función para agregar producto al ticket (Lógica movida aquí)
+    const agregarProductoAlTicket = (prod) => {
+        const existente = currentEditingProducts.find(p => p.id_producto == prod.id_producto);
+        if (existente) {
+            existente.cantidad++;
+        } else {
+            currentEditingProducts.push({
+                id_producto: prod.id_producto,
+                nombre: prod.nombre,
+                precio_unitario: Number(prod.precio),
+                id_categoria: Number(prod.id_categoria),
+                cantidad: 1
+            });
+        }
+        renderModalProducts();
+    };
+
+    // Función auxiliar para renderizar el catálogo (LISTA en vez de SELECT)
+    const renderizarCatalogo = (lista, terminoResaltar = '') => {
+        catalogListEl.innerHTML = '';
+        
+        if (lista.length === 0) {
+            catalogListEl.innerHTML = '<div style="padding:8px; color:#888; text-align:center;">No se encontraron productos</div>';
+            return;
+        }
+
+        lista.forEach(p => {
+            const div = document.createElement('div');
+            div.className = 'catalog-item';
+            
+            let nombreHtml = p.nombre;
+            if (terminoResaltar) {
+                // Escapar caracteres especiales para regex y resaltar
+                const term = terminoResaltar.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const regex = new RegExp(`(${term})`, 'gi');
+                nombreHtml = p.nombre.replace(regex, '<b>$1</b>');
+            }
+
+            div.innerHTML = `
+                <span>${nombreHtml}</span>
+                <span style="font-size:0.85rem; color:#666; margin-left:10px;">S/ ${Number(p.precio).toFixed(2)}</span>
+            `;
+            
+            div.onclick = () => agregarProductoAlTicket(p);
+            catalogListEl.appendChild(div);
+        });
+    };
+
     // 4. Cargar Catálogo de Productos (para el select del modal)
     const cargarCatalogo = async () => {
         try {
             const res = await fetch('/api/productos');
-            catalogoProductos = await res.json();
-            
-            selectAddProduct.innerHTML = '<option value="">Seleccionar producto...</option>';
-            catalogoProductos.forEach(p => {
-                const opt = document.createElement('option');
-                opt.value = p.id_producto;
-                opt.textContent = `${p.nombre} - S/ ${p.precio}`;
-                opt.dataset.precio = p.precio;
-                opt.dataset.nombre = p.nombre;
-                selectAddProduct.appendChild(opt);
-            });
+            const data = await res.json();
+            if (Array.isArray(data)) {
+                catalogoProductos = data;
+                renderizarCatalogo(catalogoProductos);
+            }
         } catch (error) {
             console.error('Error cargando catálogo:', error);
         }
     };
     cargarCatalogo();
 
+    // Filtro de productos en el modal
+    filterProductInput.addEventListener('input', (e) => {
+        const rawTerm = e.target.value;
+        const terminoNorm = rawTerm.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        
+        const filtrados = catalogoProductos.filter(p => {
+            const nombreNorm = (p.nombre || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            return nombreNorm.includes(terminoNorm);
+        });
+        renderizarCatalogo(filtrados, rawTerm);
+    });
+
     // Renderizar lista de productos en el modal
     const renderModalProducts = () => {
         listProductsEdit.innerHTML = '';
         currentEditingProducts.forEach((prod, index) => {
+            // Bloquear edición de precio si es Menú (1) o Entrada (4)
+            const isLocked = (prod.id_categoria == 1 || prod.id_categoria == 4);
+            
             const li = document.createElement('li');
             li.className = 'product-item-edit';
             li.innerHTML = `
-                <span>${prod.nombre}</span>
+                <span title="${prod.nombre}">${prod.nombre}</span>
                 <div style="display:flex; align-items:center; gap:5px; flex-wrap:wrap; justify-content:flex-end;">
-                    <input type="number" step="0.01" value="${Number(prod.precio_unitario).toFixed(2)}" class="price-input" data-index="${index}" style="width:70px; padding:2px;" placeholder="S/">
+                    <input type="number" step="0.01" value="${Number(prod.precio_unitario).toFixed(2)}" class="price-input" data-index="${index}" style="width:70px; padding:2px;" placeholder="S/" ${isLocked ? 'disabled style="background-color:#eee; color:#888;"' : ''}>
                     <input type="number" min="1" value="${prod.cantidad}" class="qty-input" data-index="${index}" style="width:50px; padding:2px;">
                     <button type="button" class="btn-remove-prod" data-index="${index}">X</button>
                 </div>
@@ -194,28 +251,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Agregar producto desde el select
-    btnAddProduct.onclick = () => {
-        const idProd = selectAddProduct.value;
-        if (!idProd) return;
-        
-        const opt = selectAddProduct.options[selectAddProduct.selectedIndex];
-        
-        // Verificar si ya existe para sumar cantidad
-        const existente = currentEditingProducts.find(p => p.id_producto == idProd);
-        if (existente) {
-            existente.cantidad++;
-        } else {
-            currentEditingProducts.push({
-                id_producto: idProd,
-                nombre: opt.dataset.nombre,
-                precio_unitario: Number(opt.dataset.precio),
-                cantidad: 1
-            });
-        }
-        renderModalProducts();
-    };
-
     // Eventos
     tablaBody.addEventListener('click', async (e) => {
         // --- NUEVO: Botón Modificar Ticket ---
@@ -232,6 +267,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 inputNotas.value = ticket.notas || '';
                 currentEditingProducts = ticket.productos || []; // Cargar productos
                 renderModalProducts();
+
+                // Resetear filtro y lista de productos al abrir
+                filterProductInput.value = '';
+                renderizarCatalogo(catalogoProductos);
+
                 modalTitle.textContent = `Editar Ticket #${idTicket}`;
                 modalEditar.style.display = "block";
             } catch (err) {
