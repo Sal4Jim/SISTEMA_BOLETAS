@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comanda de Cocina - PK2</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/comanda.css">
+
+</head>
+<body>
+    <!-- Header dinámico -->
+    <div id="headerDinamico"></div>
+
+    <main class="comanda-layout">
+        <!-- Panel Izquierdo: Catálogo -->
+        <div class="catalog-panel">
+            <div class="category-tabs" id="categoryTabs">
+                <button class="cat-tab active" data-id="all">Todos</button>
+                <!-- Se llenará dinámicamente -->
+            </div>
+            
+            <input type="text" id="searchProduct" placeholder="🔍 Buscar producto..." class="form-input" style="margin-bottom: 15px;">
+
+            <div id="lista-productos" class="products-grid">
+                <!-- Los productos se cargarán aquí -->
+            </div>
+        </div>
+
+        <!-- Panel Derecho: Comanda -->
+        <div class="ticket-panel">
+            <div class="ticket-header">
+                <h2>📋 Comanda Cocina</h2>
+            </div>
+            
+            <div class="form-row">
+                <label for="mesa">Mesa</label>
+                <select id="mesa" class="form-input">
+                    <option value="" disabled selected>Seleccione Mesa...</option>
+                    <option value="Delivery">Delivery</option>
+                    <option value="1">Mesa 1</option>
+                    <option value="2">Mesa 2</option>
+                    <option value="3">Mesa 3</option>
+                    <option value="4">Mesa 4</option>
+                    <option value="5">Mesa 5</option>
+                    <option value="6">Mesa 6</option>
+                    <option value="7">Mesa 7</option>
+                    <option value="8">Mesa 8</option>
+                    <option value="9">Mesa 9</option>
+                    <option value="10">Mesa 10</option>
+                    <option value="11">Mesa 11</option>
+                    <option value="12">Mesa 12</option>
+                    <option value="13">Mesa 13</option>
+                    <option value="14">Mesa 14</option>
+                    <option value="15">Mesa 15</option>
+                </select>
+            </div>
+
+            <div class="form-row">
+                <label for="notas">Notas / Observaciones</label>
+                <textarea id="notas" class="form-input" rows="2" placeholder="Ej: Sin picante, Bien cocido..."></textarea>
+            </div>
+
+            <div style="flex-grow: 1; display:flex; flex-direction:column; overflow:hidden;">
+                <label style="font-size:0.85rem; color:#666; margin-bottom:5px;">Detalle del Pedido</label>
+                <ul id="carrito-items" class="cart-items">
+                    <li style="text-align:center; color:#999; padding:20px;">
+                        Selecciona productos para comenzar
+                    </li>
+                </ul>
+            </div>
+
+            <div class="ticket-footer">
+                <div class="total-display">
+                    <span>Total Estimado:</span>
+                    <span id="carrito-total">S/ 0.00</span>
+                </div>
+                <button id="btn-enviar-cocina" class="btn-send">
+                    👨‍🍳 Enviar a Cocina
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <div id="footerDinamico"></div>
+
+    <script src="js/index.js"></script>
+    <script src="js/comanda.js"></script>
+</body>
+</html>

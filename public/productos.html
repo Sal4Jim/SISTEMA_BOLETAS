@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Productos - PK2</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/productos.css">
+</head>
+<body>
+    <div id="headerDinamico"></div>
+
+    <main class="dashboard-container">
+        <div class="header-actions">
+            <h1>Inventario de Productos</h1>
+            <div class="actions-group">
+                <input type="text" id="input-busqueda" placeholder="🔍 Buscar por nombre...">
+                <button id="btn-nuevo-producto">
+                    <span>+</span> Nuevo Producto
+                </button>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="crud-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Imagen</th>
+                        <th>Nombre</th>
+                        <th>Descripción</th>
+                        <th>Precio</th>
+                        <th>Categoría</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-productos-body">
+                    <!-- Se llena dinámicamente -->
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- Modal Formulario -->
+    <div id="modal-producto" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2 id="modal-titulo">Nuevo Producto</h2>
+            <form id="form-producto">
+                <input type="hidden" id="prod-id">
+                
+                <div class="form-group">
+                    <label for="prod-nombre">Nombre:</label>
+                    <input type="text" id="prod-nombre" required>
+                </div>
+                <div class="form-group">
+                    <label for="prod-descripcion">Descripción:</label>
+                    <input type="text" id="prod-descripcion">
+                </div>
+                <div class="form-group">
+                    <label for="prod-precio">Precio (S/):</label>
+                    <input type="number" id="prod-precio" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="prod-imagen">Imagen:</label>
+                    <input type="file" id="prod-imagen" accept="image/*">
+                </div>
+                <div class="form-group">
+                    <label for="prod-categoria">Categoría del Producto:</label>
+                    <select id="prod-categoria" required>
+                        <option value="">Seleccione una categoría</option>
+                    </select>
+                </div>
+                <div class="form-group" style="flex-direction: row; align-items: center; gap: 10px; display: flex;">
+                    <input type="checkbox" id="prod-activo" style="width: auto; margin: 0;" checked>
+                    <label for="prod-activo" style="margin: 0;">Producto Activo</label>
+                </div>
+                <button type="submit" class="btn-save-modal">Guardar Producto</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="footerDinamico"></div>
+    <script src="js/index.js"></script>
+    <script src="js/productos.js"></script>
+</body>
+</html>

@@ -1,0 +1,130 @@
+package com.mypk2.app.adapter;
+
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.TextView;
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.RecyclerView;
+import com.google.android.material.materialswitch.MaterialSwitch;
+import com.mypk2.app.R;
+import com.mypk2.app.model.Producto;
+import com.mypk2.app.repository.ProductoRepository;
+import com.mypk2.app.utils.ImageLoader;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+
+public class ProductoEditarAdapter extends RecyclerView.Adapter<ProductoEditarAdapter.ViewHolder> {
+    private final List<Producto> productos;
+    private OnEstadoChangeListener estadoChangeListener;
+    private ProductoRepository productoRepository;
+
+    public interface OnEstadoChangeListener {
+        void onEstadoChanged();
+    }
+
+    public ProductoEditarAdapter(ProductoRepository repository) {
+        this.productos = new ArrayList<>();
+        this.productoRepository = repository;
+    }
+
+    public void setProductos(List<Producto> productos) {
+        this.productos.clear();
+        this.productos.addAll(productos);
+        notifyDataSetChanged();
+    }
+
+    public void setOnEstadoChangeListener(OnEstadoChangeListener listener) {
+        this.estadoChangeListener = listener;
+    }
+
+    @NonNull
+    @Override
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.item_producto_editar, parent, false);
+        return new ViewHolder(view);
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+        Producto p = productos.get(position);
+        holder.bind(p);
+    }
+
+    @Override
+    public int getItemCount() {
+        return productos.size();
+    }
+
+    class ViewHolder extends RecyclerView.ViewHolder {
+        private final ImageView imageViewProducto;
+        private final TextView textViewNombre;
+        private final TextView textViewPrecio;
+        private final TextView textViewEstado;
+        private final MaterialSwitch switchActivo;
+
+        ViewHolder(@NonNull View itemView) {
+            super(itemView);
+            imageViewProducto = itemView.findViewById(R.id.imageViewProducto);
+            textViewNombre = itemView.findViewById(R.id.textViewNombre);
+            textViewPrecio = itemView.findViewById(R.id.textViewPrecio);
+            textViewEstado = itemView.findViewById(R.id.textViewEstado);
+            switchActivo = itemView.findViewById(R.id.switchActivo);
+        }
+
+        void bind(Producto producto) {
+            textViewNombre.setText(producto.getNombre());
+            textViewPrecio.setText(String.format(Locale.getDefault(), "S/. %,.2f", producto.getPrecio()));
+            // IMPORTANTE: Remover listener antes de cambiar el estado programáticamente
+            // para evitar que se dispare el evento por el reciclaje de vistas.
+            switchActivo.setOnCheckedChangeListener(null);
+            switchActivo.setChecked(producto.isActivo());
+
+            // Cargar imagen usando ImageLoader
+            ImageLoader.cargarImagenProducto(itemView.getContext(), imageViewProducto, producto);
+
+            // Mostrar estado visual
+            if (producto.isActivo()) {
+                textViewEstado.setText("ACTIVO");
+                textViewEstado.setBackgroundResource(R.drawable.bg_estado_activo);
+                itemView.setAlpha(1f);
+                imageViewProducto.setAlpha(1f);
+            } else {
+                textViewEstado.setText("INACTIVO");
+                textViewEstado.setBackgroundResource(R.drawable.bg_estado_inactivo);
+                itemView.setAlpha(0.6f);
+                imageViewProducto.setAlpha(0.6f);
+            }
+
+            switchActivo.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                // Verificar si la posición es válida para evitar crashes raros
+                if (getAdapterPosition() == RecyclerView.NO_POSITION)
+                    return;
+
+                producto.setActivo(isChecked);
+                productoRepository.actualizarActivo(producto.getId(), isChecked);
+
+                // Notificar cambio de estado
+                if (estadoChangeListener != null) {
+                    estadoChangeListener.onEstadoChanged();
+                }
+
+                // Actualizar estado visual inmediatamente
+                if (isChecked) {
+                    textViewEstado.setText("ACTIVO");
+                    textViewEstado.setBackgroundResource(R.drawable.bg_estado_activo);
+                    itemView.setAlpha(1f);
+                    imageViewProducto.setAlpha(1f);
+                } else {
+                    textViewEstado.setText("INACTIVO");
+                    textViewEstado.setBackgroundResource(R.drawable.bg_estado_inactivo);
+                    itemView.setAlpha(0.6f);
+                    imageViewProducto.setAlpha(0.6f);
+                }
+            });
+        }
+    }
+}

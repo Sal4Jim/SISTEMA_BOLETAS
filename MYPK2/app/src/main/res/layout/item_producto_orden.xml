@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="2dp"
+    app:cardUseCompatPadding="true"
+    app:strokeColor="#EEEEEE"
+    app:strokeWidth="1dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="12dp">
+
+        <!-- Contenedor para la imagen con bordes redondeados -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="120dp"
+            android:background="#F5F5F5"
+            android:clipToPadding="false"
+            android:clipChildren="false">
+
+            <!-- Imagen del producto -->
+            <ImageView
+                android:id="@+id/imageViewProducto"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:src="@drawable/placeholder_comida"
+                android:contentDescription="@string/imagen_producto" />
+
+            <!-- Superposición para bordes redondeados solo en la parte superior -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/rounded_top_corners" />
+
+        </FrameLayout>
+
+        <!-- Nombre del producto -->
+        <TextView
+            android:id="@+id/textViewNombre"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Nombre del producto"
+            android:textColor="#212121"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:maxLines="2"
+            android:ellipsize="end" />
+
+        <!-- Precio -->
+        <TextView
+            android:id="@+id/textViewPrecio"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="S/. 0.00"
+            android:textColor="#FF6B35"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <!-- Contador -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal"
+            android:gravity="center">
+
+            <!-- Botón Menos -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buttonMenos"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:text="−"
+                android:textSize="16sp"
+                app:cornerRadius="18dp"
+                app:strokeColor="#FF6B35"
+                app:strokeWidth="1dp" />
+
+            <!-- Cantidad -->
+            <TextView
+                android:id="@+id/textViewCantidad"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_marginHorizontal="8dp"
+                android:gravity="center"
+                android:text="0"
+                android:textColor="#212121"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:background="#F5F5F5" />
+
+            <!-- Botón Más -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buttonMas"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:text="+"
+                android:textSize="16sp"
+                app:cornerRadius="18dp"
+                app:strokeColor="#FF6B35"
+                app:strokeWidth="1dp" />
+
+        </LinearLayout>
+
+        <!-- Estado (solo si está inactivo) -->
+        <TextView
+            android:id="@+id/textViewEstado"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:gravity="center"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="3dp"
+            android:text="NO DISPONIBLE"
+            android:textColor="#FF5252"
+            android:textSize="9sp"
+            android:textStyle="bold"
+            android:background="#FFEBEE"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

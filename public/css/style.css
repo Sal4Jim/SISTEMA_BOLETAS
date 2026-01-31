@@ -1,0 +1,119 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+:root {
+    --primary: #1e3a5f;
+    --secondary: #ff6b35;
+    --accent: #3498db;
+    --bg-body: #fff8f0;
+    --bg-card: #ffffff;
+    --text-main: #333333;
+    --text-muted: #7f8c8d;
+    --border-color: #ffe0b2;
+    --success: #27ae60;
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 5px 15px rgba(0, 0, 0, 0.1);
+    --radius: 10px;
+}
+
+html {
+    height: 100%;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: var(--bg-body);
+    color: var(--text-main);
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* --- HEADER --- */
+nav {
+    background-color: var(--primary);
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: var(--shadow-sm);
+    color: white;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+nav .brand {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--secondary);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+nav .nav-links {
+    display: flex;
+    gap: 20px;
+}
+
+nav .nav-link {
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.95rem;
+    padding: 8px 16px;
+    border-radius: 20px;
+    transition: all 0.3s ease;
+}
+
+nav .nav-link:hover,
+nav .nav-link.active {
+    color: white;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.nav-logo {
+    height: 45px; 
+    width: 45px; 
+    object-fit: contain; 
+    background-color: white;
+    border-radius: 50%; 
+    border: 2px solid var(--secondary); 
+    animation: floatLogo 2s ease-in-out infinite alternate;
+}
+
+@keyframes floatLogo {
+    from { transform: translateY(0); }
+    to { transform: translateY(-5px); }
+}
+
+/* --- MAIN CONTENT --- */
+main {
+    padding: 20px;
+    flex: 1;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    nav {
+        flex-direction: column;
+        gap: 15px;
+    }
+}
+
+/* --- FOOTER --- */
+footer {
+    background-color: var(--primary);
+    color: rgba(255, 255, 255, 0.8);
+    text-align: center;
+    padding: 10px; 
+    margin-top: auto;
+    font-size: 0.8rem; 
+    border-top: 4px solid var(--secondary);
+    width: 100%;
+    box-sizing: border-box;
+}

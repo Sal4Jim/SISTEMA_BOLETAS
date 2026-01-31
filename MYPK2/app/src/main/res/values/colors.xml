@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Material Design 3 Theme Colors -->
+    <color name="md_theme_primary">#FF6B35</color>
+    <color name="md_theme_onPrimary">#FFFFFF</color>
+    <color name="md_theme_primaryContainer">#FFDBCF</color>
+    <color name="md_theme_onPrimaryContainer">#3B0800</color>
+
+    <color name="md_theme_secondary">#775651</color>
+    <color name="md_theme_onSecondary">#FFFFFF</color>
+    <color name="md_theme_secondaryContainer">#FFDBCF</color>
+    <color name="md_theme_onSecondaryContainer">#2C1511</color>
+
+    <color name="md_theme_tertiary">#705C2E</color>
+    <color name="md_theme_onTertiary">#FFFFFF</color>
+    <color name="md_theme_tertiaryContainer">#FBDFA6</color>
+    <color name="md_theme_onTertiaryContainer">#261A00</color>
+
+    <color name="md_theme_error">#BA1A1A</color>
+    <color name="md_theme_onError">#FFFFFF</color>
+    <color name="md_theme_errorContainer">#FFDAD6</color>
+    <color name="md_theme_onErrorContainer">#410002</color>
+
+    <color name="md_theme_background">#FFFBFF</color>
+    <color name="md_theme_onBackground">#201A18</color>
+    <color name="md_theme_surface">#FFFBFF</color>
+    <color name="md_theme_onSurface">#201A18</color>
+
+    <color name="md_theme_surfaceVariant">#F5DED7</color>
+    <color name="md_theme_onSurfaceVariant">#53433F</color>
+    <color name="md_theme_outline">#85736E</color>
+    <color name="md_theme_outlineVariant">#D8C2BB</color>
+
+    <!-- Colores adicionales para tu app -->
+    <color name="primary">#FF6B35</color>
+    <color name="primary_dark">#E55A2B</color>
+    <color name="primary_light">#FF8E5C</color>
+
+    <color name="secondary">#4ECDC4</color>
+    <color name="tertiary">#705C2E</color> <!-- AGREGAR ESTA LÍNEA -->
+
+    <color name="background">#F8F9FA</color>
+    <color name="surface">#FFFFFF</color>
+
+    <color name="error">#FF5252</color>
+    <color name="success">#4CAF50</color>
+    <color name="warning">#FFC107</color>
+
+    <color name="text_primary">#212121</color>
+    <color name="text_secondary">#757575</color>
+    <color name="text_disabled">#9E9E9E</color>
+
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+
+    <color name="divider">#E0E0E0</color>
+    <color name="card_stroke">#EEEEEE</color>
+
+    <color name="taper_green">#4CAF50</color>
+    <color name="taper_green_light">#E8F5E9</color>
+</resources>
