@@ -36,9 +36,11 @@ public class CartaActivity extends AppCompatActivity implements ProductoOrdenAda
     private RecyclerView recyclerView;
     private ProductoOrdenAdapter adapter;
     private ExtendedFloatingActionButton fabResumen, fabTapers;
-    private int cantidadTapers = 0;
+    // private int cantidadTapers = 0; // REEMPLAZADO POR REPOSITORIO
     private final double PRECIO_TAPER = 1.0;
     private ProductoRepository productoRepository;
+    private List<Producto> listaCompletaProductos = new ArrayList<>();
+    private EditText editTextSearch;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,6 +61,15 @@ public class CartaActivity extends AppCompatActivity implements ProductoOrdenAda
         cargarProductos();
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (adapter != null) {
+            adapter.notifyDataSetChanged();
+        }
+        actualizarBotones();
+    }
+
     private void initViews() {
         recyclerView = findViewById(R.id.recyclerViewProductos);
         fabResumen = findViewById(R.id.fabResumen);
@@ -71,6 +82,22 @@ public class CartaActivity extends AppCompatActivity implements ProductoOrdenAda
         fabResumen.setOnClickListener(v -> mostrarDialogoConfirmacion());
         fabTapers.setOnClickListener(v -> mostrarDialogoTapers());
 
+        editTextSearch = findViewById(R.id.editTextSearch);
+        editTextSearch.addTextChangedListener(new android.text.TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                filtrarProductos(s.toString());
+            }
+
+            @Override
+            public void afterTextChanged(android.text.Editable s) {
+            }
+        });
+
         actualizarBotones();
     }
 
@@ -79,17 +106,19 @@ public class CartaActivity extends AppCompatActivity implements ProductoOrdenAda
         productoRepository.getProductosLiveData().observe(this, new Observer<List<Producto>>() {
             @Override
             public void onChanged(List<Producto> productos) {
-                adapter.setProductos(productos);
+                listaCompletaProductos = new ArrayList<>(productos);
+                filtrarProductos(editTextSearch.getText().toString());
                 actualizarBotones();
             }
         });
 
-        // Cargar productos desde API (TODOS los productos para carta)
-        productoRepository.cargarProductosDesdeAPI(false); // false = todos, no solo activos
+        // Cargar productos desde API (filtrado por categorías 2, 3 y 5)
+        productoRepository.cargarProductosDesdeAPI("2,3,5", false); // false = todos, no solo activos
     }
 
     @Override
     public void onCantidadChanged(Producto producto) {
+        productoRepository.actualizarProductoCarrito(producto);
         actualizarBotones();
     }
 
@@ -99,7 +128,8 @@ public class CartaActivity extends AppCompatActivity implements ProductoOrdenAda
     }
 
     private void actualizarBotones() {
-        int totalItems = adapter.getTotalItems() + cantidadTapers;
+        int cantidadTapers = productoRepository.getCantidadTapers();
+        int totalItems = productoRepository.getCantidadTotalItems() + cantidadTapers;
         fabTapers.setText("Tapers: " + cantidadTapers);
 
         if (totalItems > 0) {
@@ -119,21 +149,23 @@ public class CartaActivity extends AppCompatActivity implements ProductoOrdenAda
         View buttonMenos = dialogView.findViewById(R.id.buttonMenosTaper);
         View buttonMas = dialogView.findViewById(R.id.buttonMasTaper);
 
-        textViewCantidad.setText(String.valueOf(cantidadTapers));
+        textViewCantidad.setText(String.valueOf(productoRepository.getCantidadTapers()));
         actualizarTotalTapers(textViewTotal);
 
         buttonMenos.setOnClickListener(v -> {
-            if (cantidadTapers > 0) {
-                cantidadTapers--;
-                textViewCantidad.setText(String.valueOf(cantidadTapers));
+            int current = productoRepository.getCantidadTapers();
+            if (current > 0) {
+                productoRepository.setCantidadTapers(current - 1);
+                textViewCantidad.setText(String.valueOf(productoRepository.getCantidadTapers()));
                 actualizarTotalTapers(textViewTotal);
                 actualizarBotones();
             }
         });
 
         buttonMas.setOnClickListener(v -> {
-            cantidadTapers++;
-            textViewCantidad.setText(String.valueOf(cantidadTapers));
+            int current = productoRepository.getCantidadTapers();
+            productoRepository.setCantidadTapers(current + 1);
+            textViewCantidad.setText(String.valueOf(productoRepository.getCantidadTapers()));
             actualizarTotalTapers(textViewTotal);
             actualizarBotones();
         });
@@ -147,13 +179,33 @@ public class CartaActivity extends AppCompatActivity implements ProductoOrdenAda
                 .show();
     }
 
+    private void filtrarProductos(String query) {
+        if (listaCompletaProductos == null)
+            return;
+
+        if (query.isEmpty()) {
+            adapter.setProductos(listaCompletaProductos);
+        } else {
+            List<Producto> filtrados = new ArrayList<>();
+            String lowerQuery = query.toLowerCase();
+            for (Producto p : listaCompletaProductos) {
+                if (p.getNombre().toLowerCase().contains(lowerQuery)) {
+                    filtrados.add(p);
+                }
+            }
+            adapter.setProductos(filtrados);
+        }
+    }
+
     private void actualizarTotalTapers(TextView textView) {
-        double totalTapers = cantidadTapers * PRECIO_TAPER;
+        double totalTapers = productoRepository.getCantidadTapers() * PRECIO_TAPER;
         textView.setText(String.format(Locale.getDefault(), "Total: S/. %,.2f", totalTapers));
     }
 
     private void mostrarDialogoConfirmacion() {
-        List<Producto> productosSeleccionados = adapter.getProductosSeleccionados();
+        // USAR EL CARRITO GLOBAL EN LUGAR DEL ADAPTER
+        List<Producto> productosSeleccionados = productoRepository.getProductosCarrito();
+        int cantidadTapers = productoRepository.getCantidadTapers();
 
         if (productosSeleccionados.isEmpty() && cantidadTapers == 0) {
             Toast.makeText(this, "No hay productos seleccionados", Toast.LENGTH_SHORT).show();
@@ -231,6 +283,42 @@ public class CartaActivity extends AppCompatActivity implements ProductoOrdenAda
             resumenPedido.total += subtotal;
         }
 
+        // Lógica de Combos en Carta Completa
+        List<Double> preciosEntradas = new ArrayList<>();
+        List<Double> preciosMenus = new ArrayList<>();
+
+        for (Producto p : productosSeleccionados) {
+            if (p.getIdCategoria() == 4) { // Entrada
+                for (int k = 0; k < p.getCantidad(); k++)
+                    preciosEntradas.add(p.getPrecio());
+            } else if (p.getIdCategoria() == 1) { // Menu
+                for (int k = 0; k < p.getCantidad(); k++)
+                    preciosMenus.add(p.getPrecio());
+            }
+        }
+
+        java.util.Collections.sort(preciosEntradas, java.util.Collections.reverseOrder());
+        java.util.Collections.sort(preciosMenus, java.util.Collections.reverseOrder());
+
+        int numCombos = Math.min(preciosEntradas.size(), preciosMenus.size());
+
+        if (numCombos > 0) {
+            double descuentoTotal = 0;
+            for (int i = 0; i < numCombos; i++) {
+                double precioOriginal = preciosEntradas.get(i) + preciosMenus.get(i);
+                if (precioOriginal > 12.0) {
+                    descuentoTotal += (precioOriginal - 12.0);
+                }
+            }
+
+            if (descuentoTotal > 0) {
+                resumenPedido.total -= descuentoTotal;
+                resumenPedido.texto.append("• DESCUENTO COMBO (x").append(numCombos).append(")")
+                        .append(" = -S/. ").append(String.format(Locale.getDefault(), "%,.2f", descuentoTotal))
+                        .append("\n");
+            }
+        }
+
         if (cantidadTapers > 0) {
             double totalTapers = cantidadTapers * PRECIO_TAPER;
             resumenPedido.texto.append("\n• Tapers para llevar")
@@ -294,19 +382,18 @@ public class CartaActivity extends AppCompatActivity implements ProductoOrdenAda
         String notasCompletas = observaciones;
 
         if (tapers > 0) {
-            if (!notasCompletas.isEmpty()) {
-                notasCompletas += "\n";
-            }
-            notasCompletas += "Tapers: " + tapers + " (S/. " + (tapers * PRECIO_TAPER) + ")";
+            // Taper ID 6
+            productosApi.add(new ApiPedido.ProductoPedido(6, tapers));
         }
 
-        double totalConTapers = total + (tapers * PRECIO_TAPER);
+        // El total ya incluye los tapers porque viene calculado del resumen
+        double totalFinal = total;
 
         // Crear objeto API
         ApiPedido apiPedido = new ApiPedido(
                 ubicacion,
                 notasCompletas,
-                totalConTapers,
+                totalFinal,
                 productosApi);
 
         // Enviar a la API
@@ -325,6 +412,19 @@ public class CartaActivity extends AppCompatActivity implements ProductoOrdenAda
                     ApiResponse apiResponse = response.body();
 
                     if (apiResponse.isSuccess()) {
+                        // Trigger de impresión (Fire & Forget)
+                        apiService.imprimirTicket(apiPedido).enqueue(new Callback<Void>() {
+                            @Override
+                            public void onResponse(Call<Void> call, Response<Void> response) {
+                                System.out.println("Solicitud de impresión enviada");
+                            }
+
+                            @Override
+                            public void onFailure(Call<Void> call, Throwable t) {
+                                System.err.println("Error al enviar impresión: " + t.getMessage());
+                            }
+                        });
+
                         runOnUiThread(() -> {
                             Toast.makeText(CartaActivity.this,
                                     "✓ Pedido #" + apiResponse.getIdPedido() + " confirmado",
@@ -384,10 +484,19 @@ public class CartaActivity extends AppCompatActivity implements ProductoOrdenAda
     }
 
     private void limpiarTodo() {
+        // Limpiamos la lista local explícitamente
+        if (listaCompletaProductos != null) {
+            for (Producto p : listaCompletaProductos) {
+                p.setCantidad(0);
+            }
+        }
+
         adapter.limpiarCantidades();
         productoRepository.resetCantidades();
-        cantidadTapers = 0;
+        // cantidadTapers = 0; // Ya se resetea en el repositorio
         actualizarBotones();
+
+        adapter.notifyDataSetChanged();
     }
 
     @Override
