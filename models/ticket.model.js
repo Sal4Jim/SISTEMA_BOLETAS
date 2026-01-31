@@ -15,11 +15,22 @@ const Ticket = {
             );
             const idTicket = ticketResult.insertId;
 
+            // Obtener precios actuales de la BD para asegurar el valor fijo inicial
+            const ids = productos.map(p => p.id_producto);
+            let preciosBD = [];
+            if (ids.length > 0) {
+                const [rows] = await connection.query('SELECT id_producto, precio FROM producto WHERE id_producto IN (?)', [ids]);
+                preciosBD = rows;
+            }
+
             // 2. Insertar cada producto en `detalle_ticket`
             for (const producto of productos) {
+                const info = preciosBD.find(p => p.id_producto == producto.id_producto);
+                const precioFinal = producto.precio_unitario !== undefined ? producto.precio_unitario : (info ? info.precio : 0);
+
                 await connection.query(
-                    'INSERT INTO detalle_ticket (id_ticket, id_producto, cantidad) VALUES (?, ?, ?)',
-                    [idTicket, producto.id_producto, producto.cantidad]
+                    'INSERT INTO detalle_ticket (id_ticket, id_producto, cantidad, precio_unitario) VALUES (?, ?, ?, ?)',
+                    [idTicket, producto.id_producto, producto.cantidad, precioFinal]
                 );
             }
 
@@ -28,6 +39,41 @@ const Ticket = {
             // Retornamos el objeto completo con el ID generado
             return { id_ticket: idTicket, fecha_emision: new Date(), ...ticketData };
 
+        } catch (error) {
+            await connection.rollback();
+            throw error;
+        } finally {
+            connection.release();
+        }
+    },
+
+    update: async (idTicket, ticketData) => {
+        const connection = await pool.getConnection();
+        try {
+            await connection.beginTransaction();
+
+            const { mesa, notas, productos, total_estimado } = ticketData;
+
+            // 1. Actualizar cabecera
+            await connection.query(
+                'UPDATE ticket SET mesa = ?, notas = ?, total_estimado = ? WHERE id_ticket = ?',
+                [mesa, notas || '', total_estimado || 0, idTicket]
+            );
+
+            // 2. Actualizar detalles: Estrategia simple -> Borrar y reinsertar
+            await connection.query('DELETE FROM detalle_ticket WHERE id_ticket = ?', [idTicket]);
+
+            if (productos && productos.length > 0) {
+                for (const producto of productos) {
+                    await connection.query(
+                        'INSERT INTO detalle_ticket (id_ticket, id_producto, cantidad, precio_unitario) VALUES (?, ?, ?, ?)',
+                        [idTicket, producto.id_producto, producto.cantidad, producto.precio_unitario || 0]
+                    );
+                }
+            }
+
+            await connection.commit();
+            return { id_ticket: idTicket, ...ticketData };
         } catch (error) {
             await connection.rollback();
             throw error;
@@ -85,7 +131,7 @@ const Ticket = {
 
             // 2. Obtener detalles (productos)
             const [detalles] = await connection.query(`
-                SELECT dt.cantidad, p.nombre, p.precio
+                SELECT dt.cantidad, p.nombre, COALESCE(dt.precio_unitario, p.precio) as precio_real, p.id_producto, p.id_categoria
                 FROM detalle_ticket dt
                 JOIN producto p ON dt.id_producto = p.id_producto
                 WHERE dt.id_ticket = ?
@@ -94,10 +140,12 @@ const Ticket = {
             // 3. Formatear productos para que coincidan con lo que espera el printer
             // El printer espera: nombre, precio_unitario, subtotal, cantidad
             const productos = detalles.map(d => ({
+                id_producto: d.id_producto,
                 nombre: d.nombre,
                 cantidad: d.cantidad,
-                precio_unitario: d.precio,
-                subtotal: d.cantidad * d.precio
+                precio_unitario: d.precio_real,
+                subtotal: d.cantidad * d.precio_real,
+                id_categoria: d.id_categoria
             }));
 
             // Si el ticket no tiene total_venta (porque es un ticket de comanda convertido),
