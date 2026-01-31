@@ -1,4 +1,4 @@
-const { pool } = require('./config/database');
+const { pool } = require('../config/database');
 async function checkColumns() {
     try {
         const [rows] = await pool.query('DESCRIBE categoria');
