@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { pool } = require('../../config/database');
-const { imprimirTicketComanda, imprimirTicket } = require('../../utils/printer'); 
+const { imprimirTicketComanda } = require('../../utils/printer'); 
 
 // CONSTANTES 
 const ID_CAT_MENU = 1;
@@ -142,51 +142,9 @@ router.post('/', async (req, res) => {
             }
         }
 
-        // 3. Si no es delivery, crear boleta automáticamente
-        let boletaParaImprimir = null;
-
-        if (mesa !== 'delivery') {
-            // Obtener siguiente correlativo
-            const [corrResult] = await connection.execute(
-                "SELECT MAX(correlativo) as max_correlativo FROM boleta WHERE serie = 'B001'"
-            );
-
-            let correlativo = 1000;
-            if (corrResult[0] && corrResult[0].max_correlativo) {
-                correlativo = corrResult[0].max_correlativo + 1;
-            }
-
-            // Insertar boleta
-            // NOTA: Se usa id_pago = 1 (Efectivo) por defecto y id_cliente = 1 (Genérico) ya que la app móvil no los envía aún
-            const [boletaResult] = await connection.execute(
-                `INSERT INTO boleta 
-                 (serie, correlativo, total_venta, id_pago, id_cliente, id_ticket) 
-                 VALUES ('B001', ?, ?, 1, 1, ?)`,
-                [correlativo, total, id_ticket]
-            );
-
-            const id_boleta = boletaResult.insertId;
-
-            // Insertar detalles de boleta copiando del ticket
-            await connection.execute(
-                `INSERT INTO detalle_boleta (id_boleta, id_producto, cantidad, precio_unitario)
-                 SELECT ?, dt.id_producto, dt.cantidad, p.precio 
-                 FROM detalle_ticket dt 
-                 JOIN producto p ON dt.id_producto = p.id_producto 
-                 WHERE dt.id_ticket = ?`,
-                [id_boleta, id_ticket]
-            );
-
-            // Preparar datos para imprimir boleta
-            boletaParaImprimir = {
-                id_boleta,
-                serie: 'B001',
-                correlativo,
-                total_venta: total,
-                fecha_emision: new Date(),
-                productos: productosEnriquecidos
-            };
-        }
+        // 3. [RETIRED] Automatic Boleta creation has been disabled as per new requirement.
+        // We only generate Kitchen Ticket.
+        const boletaParaImprimir = null;
 
         await connection.commit();
 

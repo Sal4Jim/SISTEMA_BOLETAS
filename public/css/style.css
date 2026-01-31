@@ -343,12 +343,11 @@ footer {
     background-color: var(--primary);
     color: rgba(255, 255, 255, 0.8);
     text-align: center;
-    padding: 20px;
+    padding: 10px; 
     margin-top: auto;
-    font-size: 0.9rem;
+    font-size: 0.8rem; 
     border-top: 4px solid var(--secondary);
     width: 100%;
-    /* Asegura que ocupe todo el ancho */
     box-sizing: border-box;
 }
 

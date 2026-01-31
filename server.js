@@ -79,7 +79,7 @@ app.use('/api/tickets/reporte', verifyToken); // Protege especificamente la ruta
 app.use('/api/tickets/reporte/imprimir', verifyToken); // Protege la impresion de reportes
 
 app.use('/api/productos', require('./routes/product.routes'));
-app.use('/api/boletas', require('./routes/boleta.routes'));
+// app.use('/api/boletas', require('./routes/boleta.routes')); // REMOVED
 app.use('/api/tickets', require('./routes/ticket.routes'));
 app.use('/api/categorias', require('./routes/category.routes'));
 
