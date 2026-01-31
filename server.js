@@ -3,6 +3,35 @@ const cors = require('cors');
 const { testConnection } = require('./config/database');
 
 const app = express();
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
+const Usuario = require('./models/usuario.model');
+
+// Clave secreta
+const JWT_SECRET = process.env.JWT_SECRET || 'secret_fallback_key';
+
+// Middleware de Autenticación para Reportes
+const verifyToken = (req, res, next) => {
+    // Permitir OPTIONS preflight
+    if (req.method === 'OPTIONS') {
+        return next();
+    }
+
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1]; // Bearer <token>
+
+    if (!token) {
+        return res.status(403).json({ success: false, message: 'Acceso denegado: Token requerido' });
+    }
+
+    try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        req.user = decoded;
+        next();
+    } catch (err) {
+        return res.status(401).json({ success: false, message: 'Token inválido o expirado' });
+    }
+};
 
 // Middlewares
 app.use(cors({
@@ -33,7 +62,22 @@ app.get('/api/test', (req, res) => {
     });
 });
 
-// Aquí irán las rutas de la aplicación
+// Auth Routes
+app.use('/api/auth', require('./routes/auth.routes'));
+
+// Protegemos las rutas relacionadas a los REPORTES
+// NOTA: Si hay rutas específicas de reportes en ticket.routes, idealmente las separaríamos.
+// Por ahora, aplicamos middleware a rutas específicas que sabemos que son de reportes.
+// OJO: Si '/api/tickets' se usa para todo, bloqueará todo. 
+// Vamos a inspeccionar ticket.routes.js para ver cual usa el reporte.
+// Segun index.js: fetch('/api/tickets/reporte?fecha=${fecha}')
+// Entonces interceptamos esa URL específica antes de cargar el router general si es posible, 
+// o aplicamos el middleware en ticket.routes.js.
+// Estrategia: Aplicar middleware global selectivo.
+
+app.use('/api/tickets/reporte', verifyToken); // Protege especificamente la ruta de reportes
+app.use('/api/tickets/reporte/imprimir', verifyToken); // Protege la impresion de reportes
+
 app.use('/api/productos', require('./routes/product.routes'));
 app.use('/api/boletas', require('./routes/boleta.routes'));
 app.use('/api/tickets', require('./routes/ticket.routes'));
@@ -72,4 +116,17 @@ app.listen(PORT, async () => {
     console.log('🔌 Probando conexión a la base de datos...');
     const dbResult = await testConnection();
     console.log(dbResult.success ? '✅ Base de datos conectada correctamente' : `❌ ${dbResult.message}`);
+
+    // Seeding de Usuario Admin por defecto
+    try {
+        const count = await Usuario.count();
+        if (count === 0) {
+            console.log('⚠️ No se encontraron usuarios. Creando usuario admin por defecto...');
+            const hashedPassword = await bcrypt.hash('admin123', 10);
+            await Usuario.create('admin', hashedPassword, 'admin');
+            console.log('✅ Usuario creado: admin / admin123');
+        }
+    } catch (error) {
+        console.error('❌ Error en seeding de usuarios:', error);
+    }
 });

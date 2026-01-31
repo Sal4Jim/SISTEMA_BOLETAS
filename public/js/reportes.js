@@ -1,4 +1,31 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // --- SEGURIDAD: VERIFICACIÓN DE TOKEN ---
+    // Estrategia: "Token en Memoria RAM". El token debe venir por URL (?token=...), 
+    // se guarda en esta variable, y se borra de la URL. Si se recarga la página, 
+    // la variable se pierde y la URL ya no lo tiene -> Obliga a Login.
+    
+    let authToken = null;
+    const urlParams = new URLSearchParams(window.location.search);
+    const tokenFromUrl = urlParams.get('token');
+
+    if (tokenFromUrl) {
+        // 1. Guardar en memoria
+        authToken = tokenFromUrl;
+        
+        // 2. Limpiar URL para que no quede visible y no persista al recargar
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, newUrl);
+        
+        // 3. Mostrar el contenido (evitar FOUC)
+        document.body.style.visibility = 'visible';
+        document.body.style.opacity = '1';
+    } else {
+        // No hay token -> Redirigir al Login
+        window.location.href = 'login_reportes.html';
+        return; // Detener ejecución
+    }
+    // ----------------------------------------
+
     const fechaInput = document.getElementById('fecha-reporte');
     const tablaBody = document.getElementById('tabla-reportes-body');
     const relojEl = document.getElementById('reloj-tiempo-real');
@@ -44,7 +71,19 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!fecha) return;
 
         try {
-            const res = await fetch(`/api/tickets/reporte?fecha=${fecha}`);
+            // [SEGURIDAD] Agregar Header
+            const res = await fetch(`/api/tickets/reporte?fecha=${fecha}`, {
+                headers: {
+                    'Authorization': `Bearer ${authToken}`
+                }
+            });
+            
+            if (res.status === 401 || res.status === 403) {
+                alert('Sesión expirada o inválida. Por favor, inicie sesión nuevamente.');
+                window.location.href = 'login_reportes.html';
+                return;
+            }
+
             const tickets = await res.json();
 
             tablaBody.innerHTML = '';
@@ -360,9 +399,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!confirm(`¿Desea imprimir el reporte del día ${fecha}?`)) return;
 
         try {
+            // [SEGURIDAD] Agregar Header
             const res = await fetch('/api/tickets/reporte/imprimir', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`
+                },
                 body: JSON.stringify({ fecha })
             });
 
@@ -378,6 +421,12 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 // Si no es JSON (ej. error 404 o 500 en HTML)
                 const text = await res.text();
+                // Si el error es Auth, manejarlo
+                if (res.status === 401 || res.status === 403) {
+                     alert('Sesión expirada. Inicie sesión nuevamente.');
+                     window.location.href = 'login_reportes.html';
+                     return;
+                }
                 console.error('Respuesta no válida del servidor:', text);
                 throw new Error(`El servidor devolvió un error (${res.status}). Revisa la consola (F12) para más detalles.`);
             }
