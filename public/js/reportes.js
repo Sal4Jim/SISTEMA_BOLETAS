@@ -98,19 +98,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
-                        <td>${hora}</td>
-                        <td>#${ticket.id_ticket}</td>
-                        <td>${ticket.mesa}</td>
-                        <td>${ticket.notas || '-'}</td>
-                        <td>S/ ${Number(ticket.total_estimado || 0).toFixed(2)}</td>
+                        <td style="font-weight:500;">${hora}</td>
+                        <td style="color:#888;">#${ticket.id_ticket}</td>
+                        <td><span class="badge-cat" style="background:#f0f0f0; color:#333;">${ticket.mesa}</span></td>
+                        <td style="font-size:0.9rem; color:#666;">${ticket.notas || '-'}</td>
+                        <td style="font-weight:700;">S/ ${Number(ticket.total_estimado || 0).toFixed(2)}</td>
                         <td>
-                            <button class="btn-editar btn-imprimir-nota btn-table" data-id="${ticket.id_ticket}">🖨️ Nota de venta</button>
+                            <button class="btn-table-icon btn-print btn-imprimir-nota" data-id="${ticket.id_ticket}" title="Imprimir Nota">🧾</button>
                         </td>
                         <td>
-                            <button class="btn-editar btn-reimprimir-comanda btn-table btn-kitchen" data-id="${ticket.id_ticket}">👨‍🍳 Cocina</button>
+                            <button class="btn-table-icon btn-kitchen btn-reimprimir-comanda" data-id="${ticket.id_ticket}" title="Reenviar a Cocina">👨‍🍳</button>
                         </td>
                         <td>
-                            <button class="btn-editar btn-modificar-ticket btn-table btn-edit-blue" data-id="${ticket.id_ticket}">✏️ Editar</button>
+                            <button class="btn-table-icon btn-edit btn-modificar-ticket" data-id="${ticket.id_ticket}" title="Editar Ticket">✏️</button>
                         </td>
                     `;
                     tablaBody.appendChild(tr);

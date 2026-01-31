@@ -41,17 +41,19 @@ document.addEventListener('DOMContentLoaded', () => {
         lista.forEach(prod => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td>${prod.id_producto}</td>
+                    <td style="color:#888; font-size:0.8rem;">#${prod.id_producto}</td>
                     <td>
-                        ${prod.imagen ? `<img src="${prod.imagen}" alt="Img" style="height: 50px; width: 50px; object-fit: cover; border-radius: 5px;">` : '<span style="color: #ccc;">Sin imagen</span>'}
+                        ${prod.imagen 
+                            ? `<img src="${prod.imagen}" alt="${prod.nombre}" class="prod-img-preview">` 
+                            : `<div class="no-img-placeholder">📦</div>`}
                     </td>
-                    <td>${prod.nombre}</td>
-                    <td>${prod.descripcion || ''}</td>
-                    <td>S/ ${Number(prod.precio).toFixed(2)}</td>
-                    <td>${prod.nombre_categoria || 'Sin categoría'}</td>
+                    <td style="font-weight:600; color:#333;">${prod.nombre}</td>
+                    <td style="color:#666; font-size:0.9rem;">${prod.descripcion || '-'}</td>
+                    <td style="font-weight:700; color:var(--secondary);">S/ ${Number(prod.precio).toFixed(2)}</td>
+                    <td><span class="badge-cat">${prod.nombre_categoria || 'General'}</span></td>
                     <td>
-                        <button class="btn-editar" data-id="${prod.id_producto}">Editar</button>
-                        <button class="btn-eliminar" data-id="${prod.id_producto}">Eliminar</button>
+                        <button class="action-btn btn-editar" data-id="${prod.id_producto}" title="Editar">✏️</button>
+                        <button class="action-btn btn-eliminar" data-id="${prod.id_producto}" title="Eliminar">🗑️</button>
                     </td>
                 `;
                 tablaBody.appendChild(tr);

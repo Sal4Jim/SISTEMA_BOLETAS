@@ -21,9 +21,6 @@ const sortProductsByCategory = (products) => {
 };
 
 // Función para imprimir el ticket
-// Función para imprimir el ticket
-// [REMOVED] Logic for Electronic Boleta (imprimirTicket) as per user request
-
 
 // Función para imprimir el TICKET DE COMANDA (COCINA/BARRA)
 const imprimirTicketComanda = (ticket) => {
