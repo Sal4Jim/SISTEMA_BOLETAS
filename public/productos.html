@@ -11,11 +11,13 @@
     <div id="headerDinamico"></div>
 
     <main class="dashboard-container">
-        <div class="header-actions" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h1 style="color: var(--primary); margin: 0;">Inventario de Productos</h1>
-            <div style="display: flex; gap: 10px;">
-                <input type="text" id="input-busqueda" placeholder="Buscar por nombre..." style="padding: 10px; border: 1px solid var(--border-color); border-radius: 5px;">
-                <button class="btn-agregar" id="btn-nuevo-producto" style="width: auto; padding: 10px 20px;">+ Nuevo Producto</button>
+        <div class="header-actions">
+            <h1>Inventario de Productos</h1>
+            <div class="actions-group">
+                <input type="text" id="input-busqueda" placeholder="🔍 Buscar por nombre...">
+                <button id="btn-nuevo-producto">
+                    <span>+</span> Nuevo Producto
+                </button>
             </div>
         </div>
 
@@ -29,6 +31,7 @@
                         <th>Descripción</th>
                         <th>Precio</th>
                         <th>Categoría</th>
+                        <th>Estado</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -69,7 +72,11 @@
                         <option value="">Seleccione una categoría</option>
                     </select>
                 </div>
-                <button type="submit" class="btn-agregar">Guardar</button>
+                <div class="form-group" style="flex-direction: row; align-items: center; gap: 10px; display: flex;">
+                    <input type="checkbox" id="prod-activo" style="width: auto; margin: 0;" checked>
+                    <label for="prod-activo" style="margin: 0;">Producto Activo</label>
+                </div>
+                <button type="submit" class="btn-save-modal">Guardar Producto</button>
             </form>
         </div>
     </div>

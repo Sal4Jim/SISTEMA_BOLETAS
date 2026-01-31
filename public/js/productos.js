@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const inputPrecio = document.getElementById('prod-precio');
     const inputImagen = document.getElementById('prod-imagen');
     const inputCategoria = document.getElementById('prod-categoria');
+    const inputActivo = document.getElementById('prod-activo'); // Agregado
 
     let productosLista = [];
 
@@ -41,17 +42,28 @@ document.addEventListener('DOMContentLoaded', () => {
         lista.forEach(prod => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td>${prod.id_producto}</td>
+                    <td style="color:#888; font-size:0.8rem;">#${prod.id_producto}</td>
                     <td>
-                        ${prod.imagen ? `<img src="${prod.imagen}" alt="Img" style="height: 50px; width: 50px; object-fit: cover; border-radius: 5px;">` : '<span style="color: #ccc;">Sin imagen</span>'}
+                        ${prod.imagen 
+                            ? `<img src="${prod.imagen}" alt="${prod.nombre}" class="prod-img-preview">` 
+                            : `<div class="no-img-placeholder">📦</div>`}
                     </td>
-                    <td>${prod.nombre}</td>
-                    <td>${prod.descripcion || ''}</td>
-                    <td>S/ ${Number(prod.precio).toFixed(2)}</td>
-                    <td>${prod.nombre_categoria || 'Sin categoría'}</td>
+                    <td style="font-weight:600; color:#333;">
+                        ${prod.nombre}
+                        ${!prod.activo ? '<span style="color:#e74c3c; font-size:0.7rem; margin-left:5px;">[INACTIVO]</span>' : ''}
+                    </td>
+                    <td style="color:#666; font-size:0.9rem;">${prod.descripcion || '-'}</td>
+                    <td style="font-weight:700; color:var(--secondary);">S/ ${Number(prod.precio).toFixed(2)}</td>
+                    <td><span class="badge-cat">${prod.nombre_categoria || 'General'}</span></td>
                     <td>
-                        <button class="btn-editar" data-id="${prod.id_producto}">Editar</button>
-                        <button class="btn-eliminar" data-id="${prod.id_producto}">Eliminar</button>
+                        <label class="switch">
+                            <input type="checkbox" class="toggle-status" data-id="${prod.id_producto}" ${prod.activo ? 'checked' : ''}>
+                            <span class="slider"></span>
+                        </label>
+                    </td>
+                    <td>
+                        <button class="action-btn btn-editar" data-id="${prod.id_producto}" title="Editar">✏️</button>
+                        <button class="action-btn btn-eliminar" data-id="${prod.id_producto}" title="Eliminar">🗑️</button>
                     </td>
                 `;
                 tablaBody.appendChild(tr);
@@ -73,6 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
     btnNuevo.onclick = () => {
         formProducto.reset();
         inputId.value = '';
+        inputActivo.checked = true; // Por defecto activo
         modalTitulo.textContent = 'Nuevo Producto';
         modal.style.display = 'block';
     };
@@ -89,6 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
         formData.append('descripcion', inputDescripcion.value);
         formData.append('precio', inputPrecio.value);
         formData.append('id_categoria', inputCategoria.value);
+        formData.append('activo', inputActivo.checked ? 1 : 0); // Agregado
 
         if (inputImagen.files[0]) {
             formData.append('imagen', inputImagen.files[0]);
@@ -127,8 +141,9 @@ document.addEventListener('DOMContentLoaded', () => {
             inputNombre.value = prod.nombre;
             inputDescripcion.value = prod.descripcion || '';
             inputPrecio.value = prod.precio;
-            inputImagen.value = ''; // Limpiar input file (no se puede setear valor programáticamente)
+            inputImagen.value = ''; // Limpiar input file
             inputCategoria.value = prod.id_categoria;
+            inputActivo.checked = prod.activo == 1; // Agregado
             
             modalTitulo.textContent = 'Editar Producto';
             modal.style.display = 'block';
@@ -146,6 +161,35 @@ document.addEventListener('DOMContentLoaded', () => {
                     const errorData = await res.json();
                     alert('Error al eliminar: ' + (errorData.message || 'El producto podría estar en uso en una boleta.'));
                 }
+            }
+        }
+    });
+
+    // Nuevo: Manejar cambio de estado directo
+    tablaBody.addEventListener('change', async (e) => {
+        if (e.target.classList.contains('toggle-status')) {
+            const id = e.target.dataset.id;
+            const nuevoEstado = e.target.checked ? 1 : 0;
+            
+            try {
+                const res = await fetch(`/api/mobile/productos/${id}/activo`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ activo: nuevoEstado })
+                });
+
+                if (!res.ok) {
+                    throw new Error('Error al actualizar estado');
+                }
+                
+                // Actualizar la lista local para que coincida
+                const prod = productosLista.find(p => p.id_producto == id);
+                if (prod) prod.activo = nuevoEstado;
+                
+            } catch (error) {
+                console.error(error);
+                alert('No se pudo cambiar el estado. Intente nuevamente.');
+                e.target.checked = !e.target.checked; // Revertir visualmente
             }
         }
     });
