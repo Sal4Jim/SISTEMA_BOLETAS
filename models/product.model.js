@@ -16,19 +16,19 @@ const Product = {
     },
 
     create: async (productData) => {
-        const { nombre, descripcion, precio, imagen, id_categoria } = productData;
+        const { nombre, descripcion, precio, imagen, id_categoria, activo } = productData;
         const [result] = await pool.query(
-            'INSERT INTO producto (nombre, descripcion, precio, imagen, id_categoria) VALUES (?, ?, ?, ?, ?)',
-            [nombre, descripcion || null, precio, imagen || null, id_categoria]
+            'INSERT INTO producto (nombre, descripcion, precio, imagen, id_categoria, activo) VALUES (?, ?, ?, ?, ?, ?)',
+            [nombre, descripcion || null, precio, imagen || null, id_categoria, activo !== undefined ? activo : 1]
         );
         return { id: result.insertId, ...productData };
     },
 
     update: async (id, productData) => {
-        const { nombre, descripcion, precio, imagen, id_categoria } = productData;
+        const { nombre, descripcion, precio, imagen, id_categoria, activo } = productData;
         const [result] = await pool.query(
-            'UPDATE producto SET nombre = ?, descripcion = ?, precio = ?, imagen = ?, id_categoria = ? WHERE id_producto = ?',
-            [nombre, descripcion || null, precio, imagen || null, id_categoria, id]
+            'UPDATE producto SET nombre = ?, descripcion = ?, precio = ?, imagen = ?, id_categoria = ?, activo = ? WHERE id_producto = ?',
+            [nombre, descripcion || null, precio, imagen || null, id_categoria, activo !== undefined ? activo : 1, id]
         );
         return result.affectedRows;
     },
